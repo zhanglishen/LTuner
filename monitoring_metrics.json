@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-01-21T17:25:03.419299",
+  "window_minutes": 120,
+  "collection_time_seconds": 0.02,
+  "tps": {
+    "commit_tps": 0.16,
+    "rollback_tps": 0.0,
+    "total_tps": 0.16
+  },
+  "qps": 21.43,
+  "connections": {
+    "active": 1,
+    "idle": 1,
+    "total": 2
+  },
+  "cache_hit_ratio": {
+    "buffer": 99.82,
+    "index": 80.0
+  },
+  "io": {
+    "blks_read_per_sec": 5.4,
+    "blks_hit_per_sec": 2927.66,
+    "rows_returned_per_sec": 214.24,
+    "rows_modified_per_sec": 106.82
+  },
+  "slow_queries": [],
+  "slow_query_count": 0,
+  "top_tables": [],
+  "locks": {
+    "ExclusiveLock": 1,
+    "AccessShareLock": 1
+  },
+  "total_locks": 2
+}

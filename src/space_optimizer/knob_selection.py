@@ -7,17 +7,43 @@ import threading
 from knowledge_handler.gpt import GPT
 from config_recommender.workload_runner import BenchbaseRunner
 
+# 集成 RAG 和场景识别
+try:
+    from scenario_engine.classifier import ScenarioClassifier
+    from scenario_engine.prompt_templates import PromptTemplates
+    SCENARIO_AVAILABLE = True
+except ImportError:
+    SCENARIO_AVAILABLE = False
+    print("警告：场景识别模块未找到，将使用默认模式")
+
 class KnobSelection(GPT):
-    def __init__(self, api_base, api_key, db, dbms, benchmark, model=GPT.__init__.__defaults__[0]):
-        super().__init__(api_base, api_key, model=model)
+    def __init__(self, api_base, api_key, db, dbms, benchmark, model=GPT.__init__.__defaults__[0], use_rag=True):
+        super().__init__(api_base, api_key, model=model, use_rag=use_rag, db=db)
         self.db = db
         self.dbms = dbms
         self.benchmark = benchmark
         self.config = ConfigParser()
-        if self.benchmark == 'tpch':
-            self.workload = "OLAP"
+        
+        # 场景识别
+        self.scenario = None
+        if SCENARIO_AVAILABLE:
+            self.scenario_classifier = ScenarioClassifier()
+            # 根据基准测试自动识别场景
+            scenario_result = self.scenario_classifier.classify_by_benchmark(self.benchmark)
+            self.scenario = scenario_result['scenario']
+            print(f"[RAG增强] 识别到场景: {self.scenario} (置信度: {scenario_result['confidence']:.2f})")
+            print(f"  判断依据: {scenario_result['reasons'][0]}")
         else:
-            self.workload = "OLTP"
+            # 回退到原始逻辑
+            if self.benchmark == 'tpch':
+                self.workload = "OLAP"
+                self.scenario = "OLAP"
+            else:
+                self.workload = "OLTP"
+                self.scenario = "OLTP"
+                
+        self.workload = self.scenario  # 保持与原有代码兼容
+        
         self.system_view_dir = f"./knowledge_collection/{self.db}/candidate_knobs.txt"
         self.target_knobs_dir = f"./knowledge_collection/{self.db}/target_knobs.txt"
         if os.path.exists(self.target_knobs_dir):
@@ -27,10 +53,12 @@ class KnobSelection(GPT):
         
     def get_candidate_konbs(self):
         knobs = []
+        # candidate_knobs.txt 是纯文本格式
         with open(self.system_view_dir, 'r') as file:
-            data = json.load(file)
-            for key, item in data.items():
-                knobs.append(key)
+            for line in file:
+                knob = line.strip()
+                if knob:
+                    knobs.append(knob)
         return knobs
 
     def read_files_in_directory(directory_path):
@@ -64,23 +92,49 @@ class KnobSelection(GPT):
     def select_on_workload_level(self):
         print("select_on_workload_level")
         selected_knobs = {}
+        
+        # 如果启用了场景识别，使用专属提示模板
+        if SCENARIO_AVAILABLE and self.scenario:
+            print(f"[RAG增强] 使用 {self.scenario} 场景专属提示模板")
+            
         for i in range(0, len(self.candidate_knobs), 30):
             candidates = self.candidate_knobs[i:i + 30]
-            prompt = textwrap.dedent(f"""
-                You are an experienced DBA and your will determine which knobs are worth tuning. You only tune knobs that have a significant impact on DBMS performance and the target DBMS is {self.db}. Which knobs are important heavily depends on the workload type because different workloads result in different performance bottleneck.Given the workload type, analyze and identify the important knobs that significantly impact database performance when such workload is deployed.  Given the following candidate knobs, score the importance for each knob between 0 and 1, with a higher value indicating that it is more likey to impact {self.db} performance significantly. 
-                Candidate knobs: {candidates}
-                DBMS: {self.db};
-                WORKLOAD TYPE:{self.workload}
-                Now let us think step by step and give me your scoring of all the candidate knobs in json format:
-                {{
-                    "knob_name": {{score}}    // fill "score" with a number between 0 and 1
-                }}
-                If no knobs are suggested, just fill "knob_list" with "None" and also return result in json format. 
-                """)
-                
-            json_result = self.get_GPT_response_json(prompt, json_format=True)
+            
+            # 使用场景专属提示模板（如果可用）
+            if SCENARIO_AVAILABLE and self.scenario:
+                workload_info = {
+                    'benchmark': self.benchmark,
+                    'workload_type': self.workload
+                }
+                prompt = PromptTemplates.get_knob_selection_prompt(
+                    scenario=self.scenario,
+                    workload_info=workload_info,
+                    candidate_knobs=candidates,
+                    historical_context=""  # 可以后续添加历史上下文
+                )
+            else:
+                # 原始提示
+                prompt = textwrap.dedent(f"""
+                    You are an experienced DBA and your will determine which knobs are worth tuning. You only tune knobs that have a significant impact on DBMS performance and the target DBMS is {self.db}. Which knobs are important heavily depends on the workload type because different workloads result in different performance bottleneck.Given the workload type, analyze and identify the important knobs that significantly impact database performance when such workload is deployed.  Given the following candidate knobs, score the importance for each knob between 0 and 1, with a higher value indicating that it is more likey to impact {self.db} performance significantly. 
+                    Candidate knobs: {candidates}
+                    DBMS: {self.db};
+                    WORKLOAD TYPE:{self.workload}
+                    Now let us think step by step and give me your scoring of all the candidate knobs in json format:
+                    {{
+                        "knob_name": {{score}}    // fill "score" with a number between 0 and 1
+                    }}
+                    If no knobs are suggested, just fill "knob_list" with "None" and also return result in json format. 
+                    """)
+            
+            # 调用 LLM，带上场景信息以启用 RAG
+            json_result = self.get_GPT_response_json(
+                prompt, 
+                json_format=True,
+                scenario=self.scenario if self.use_rag else None
+            )
             print(json_result)
             selected_knobs.update(json_result)
+            
         print(selected_knobs)
         return selected_knobs
 

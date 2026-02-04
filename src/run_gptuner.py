@@ -54,7 +54,19 @@ if __name__ == '__main__':
 
     # Select target knobs, write your api_base and api_key
     dbms._connect("benchbase")
-    knob_selection = KnobSelection(db=args.db, dbms=dbms, benchmark=args.test, api_base="your_api_base", api_key="your_api_key", model="gpt-4o")
+    # 启用 RAG 增强模式
+    print("=" * 60)
+    print("[系统] 启动 GPTuner 增强版 - 集成 RAG 和场景识别")
+    print("=" * 60)
+    knob_selection = KnobSelection(
+        db=args.db, 
+        dbms=dbms, 
+        benchmark=args.test, 
+        api_base="https://dashscope.aliyuncs.com/compatible-mode/v1", 
+        api_key="sk-8695e5513e7d451d9fd1dd8fe155a2da", 
+        model="qwen-plus",
+        use_rag=True  # 启用 RAG
+    )
     knob_selection.select_interdependent_all_knobs()
 
 
@@ -66,9 +78,9 @@ if __name__ == '__main__':
 
 
     # write your api_base and api_key
-    knowledge_pre = KGPre(db=args.db, api_base="your_api_base", api_key="your_api_key", model="gpt-4o")
-    knowledge_trans = KGTrans(db=args.db, api_base="your_api_base", api_key="your_api_key", model="gpt-4o")
-    knowledge_update = KGUpdate(db=args.db, api_base="your_api_base", api_key="your_api_key", model="gpt-4o")
+    knowledge_pre = KGPre(db=args.db, api_base="https://dashscope.aliyuncs.com/compatible-mode/v1", api_key="sk-8695e5513e7d451d9fd1dd8fe155a2da", model="qwen-plus")
+    knowledge_trans = KGTrans(db=args.db, api_base="https://dashscope.aliyuncs.com/compatible-mode/v1", api_key="sk-8695e5513e7d451d9fd1dd8fe155a2da", model="qwen-plus")
+    knowledge_update = KGUpdate(db=args.db, api_base="https://dashscope.aliyuncs.com/compatible-mode/v1", api_key="sk-8695e5513e7d451d9fd1dd8fe155a2da", model="qwen-plus")
     for i in range(1, 6):
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             futures = {executor.submit(process_knob, knob, knowledge_pre, knowledge_trans, knowledge_update): knob for knob in target_knobs}

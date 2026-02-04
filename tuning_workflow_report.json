@@ -1,0 +1,241 @@
+{
+  "start_time": "2026-01-22T08:46:34.157779",
+  "mode": "manual",
+  "steps": {
+    "step1_analyze": {
+      "timestamp": "2026-01-22T08:46:34.173830",
+      "step": "analyze_and_recommend",
+      "monitor_report": {
+        "metrics": {
+          "timestamp": "2026-01-22T08:46:34.173266",
+          "window_minutes": 60,
+          "collection_time_seconds": 0.02,
+          "tps": {
+            "commit_tps": 0.05,
+            "rollback_tps": 0.0,
+            "total_tps": 0.05
+          },
+          "qps": 52.63,
+          "connections": {
+            "active": 1,
+            "idle": 0,
+            "total": 1
+          },
+          "cache_hit_ratio": {
+            "buffer": 99.82,
+            "index": 80.0
+          },
+          "io": {
+            "blks_read_per_sec": 0.69,
+            "blks_hit_per_sec": 376.06,
+            "rows_returned_per_sec": 47.22,
+            "rows_modified_per_sec": 13.67
+          },
+          "slow_queries": [],
+          "slow_query_count": 0,
+          "top_tables": [],
+          "locks": {
+            "ExclusiveLock": 1,
+            "AccessShareLock": 1
+          },
+          "total_locks": 2
+        },
+        "workload_analysis": {
+          "timestamp": "2026-01-22T08:46:34.173301",
+          "workload": {
+            "workload_type": "OLAP",
+            "confidence": 0.8,
+            "characteristics": {
+              "tps": 0.05,
+              "qps": 52.63,
+              "buffer_hit_ratio": 99.82
+            },
+            "evidence": [
+              "TPS: 0.05, QPS: 52.63"
+            ]
+          },
+          "resource_pressure": {
+            "has_pressure": false,
+            "pressure_points": [],
+            "severity": "none"
+          },
+          "tuning_hints": [],
+          "summary": {
+            "workload_type": "OLAP",
+            "confidence": 0.8,
+            "has_pressure": false,
+            "pressure_severity": "none",
+            "hint_count": 0
+          }
+        },
+        "scenario": {
+          "scenario": "OLAP",
+          "confidence": 0.8
+        },
+        "summary": {
+          "workload_type": "OLAP",
+          "confidence": 0.8,
+          "has_pressure": false,
+          "pressure_severity": "none",
+          "hint_count": 0,
+          "scenario": "OLAP"
+        }
+      },
+      "recommendations": {
+        "timestamp": "2026-01-22T08:46:34.173814",
+        "scenario": "OLAP",
+        "total_recommendations": 9,
+        "current_config": {
+          "shared_buffers": "128MB",
+          "work_mem": "4MB",
+          "maintenance_work_mem": "64MB",
+          "effective_cache_size": "4GB",
+          "max_connections": "100",
+          "checkpoint_completion_target": "0.9",
+          "wal_buffers": "4MB",
+          "max_parallel_workers_per_gather": "2",
+          "max_worker_processes": "8"
+        },
+        "recommendations": {
+          "shared_buffers": {
+            "recommended_value": "2048MB",
+            "reason": "建议设置为系统内存的 25%",
+            "priority": "high",
+            "impact": "high"
+          },
+          "work_mem": {
+            "recommended_value": "256MB",
+            "reason": "OLAP 场景推荐值，影响排序和哈希操作",
+            "priority": "high",
+            "impact": "medium"
+          },
+          "maintenance_work_mem": {
+            "recommended_value": "1024MB",
+            "reason": "OLAP 场景，影响 VACUUM、CREATE INDEX 等维护操作",
+            "priority": "medium",
+            "impact": "medium"
+          },
+          "effective_cache_size": {
+            "recommended_value": "4096MB",
+            "reason": "查询规划器使用，建议设置为系统内存的 50%",
+            "priority": "high",
+            "impact": "high"
+          },
+          "max_connections": {
+            "recommended_value": "50",
+            "reason": "OLAP 场景推荐值，当前连接数 1",
+            "priority": "medium",
+            "impact": "medium"
+          },
+          "checkpoint_completion_target": {
+            "recommended_value": "0.9",
+            "reason": "平滑 checkpoint，减少 I/O 峰值",
+            "priority": "medium",
+            "impact": "low"
+          },
+          "wal_buffers": {
+            "recommended_value": "16MB",
+            "reason": "适合大多数工作负载",
+            "priority": "low",
+            "impact": "low"
+          },
+          "max_parallel_workers_per_gather": {
+            "recommended_value": "4",
+            "reason": "OLAP 场景启用并行查询",
+            "priority": "high",
+            "impact": "high"
+          },
+          "max_worker_processes": {
+            "recommended_value": "8",
+            "reason": "OLAP 场景增加工作进程",
+            "priority": "medium",
+            "impact": "medium"
+          }
+        },
+        "summary": {
+          "high_priority_count": 4,
+          "medium_priority_count": 4,
+          "low_priority_count": 1
+        }
+      },
+      "summary": {
+        "scenario": "OLAP",
+        "workload_type": "OLAP",
+        "total_recommendations": 9,
+        "high_priority_count": 4,
+        "has_pressure": false
+      }
+    },
+    "step2_preview": {
+      "timestamp": "2026-01-22T08:46:34.173882",
+      "step": "preview_changes",
+      "preview_result": {
+        "timestamp": "2026-01-22T08:46:34.173870",
+        "dry_run": true,
+        "total_changes": 9,
+        "successful": [
+          {
+            "knob": "shared_buffers",
+            "value": "2048MB",
+            "simulated": true
+          },
+          {
+            "knob": "work_mem",
+            "value": "256MB",
+            "simulated": true
+          },
+          {
+            "knob": "maintenance_work_mem",
+            "value": "1024MB",
+            "simulated": true
+          },
+          {
+            "knob": "effective_cache_size",
+            "value": "4096MB",
+            "simulated": true
+          },
+          {
+            "knob": "max_connections",
+            "value": "50",
+            "simulated": true
+          },
+          {
+            "knob": "checkpoint_completion_target",
+            "value": "0.9",
+            "simulated": true
+          },
+          {
+            "knob": "wal_buffers",
+            "value": "16MB",
+            "simulated": true
+          },
+          {
+            "knob": "max_parallel_workers_per_gather",
+            "value": "4",
+            "simulated": true
+          },
+          {
+            "knob": "max_worker_processes",
+            "value": "8",
+            "simulated": true
+          }
+        ],
+        "failed": [],
+        "skipped": []
+      },
+      "changes_count": {
+        "successful": 9,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    "step3_approval": {
+      "timestamp": "2026-01-22T08:46:34.173902",
+      "step": "request_approval",
+      "status": "pending",
+      "message": "等待 DBA 审批决策"
+    }
+  },
+  "end_time": "2026-01-22T08:46:34.173909",
+  "status": "completed"
+}
