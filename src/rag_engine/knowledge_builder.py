@@ -1,6 +1,7 @@
 """
 知识库构建模块
 从现有 knowledge_collection 提取知识并构建向量索引
+支持 LADO 三维增强：症状映射、参数依赖、硬约束规则
 """
 import os
 import json
@@ -8,6 +9,9 @@ import pickle
 import numpy as np
 from sentence_transformers import SentenceTransformer
 import faiss
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from knowledge_handler.knowledge_base import KnowledgeBase, KnowledgeUnit
 
 
 class KnowledgeBuilder:
@@ -38,21 +42,117 @@ class KnowledgeBuilder:
         self.embeddings = None
         self.index = None
         
+        # LADO 知识库
+        self.lado_kb = None
+        self.multi_view_embeddings = {}  # view_name -> embeddings
+        
     def build_knowledge_base(self):
         """从现有知识源构建知识库"""
         print("开始构建知识库...")
         
-        # 1. 加载调优湖（tuning_lake）中的知识
+        # 1. 加载 LADO 结构化知识库（优先）
+        print("\n[1/4] 加载 LADO 结构化知识库...")
+        self._load_lado_knowledge()
+        
+        # 2. 加载调优湖（tuning_lake）中的知识
+        print("\n[2/4] 加载 Tuning Lake 知识...")
         self._load_tuning_lake()
         
-        # 2. 加载结构化知识
+        # 3. 加载旧版结构化知识（向后兼容）
+        print("\n[3/4] 加载旧版结构化知识...")
         self._load_structured_knowledge()
         
-        # 3. 加载候选参数信息
+        # 4. 加载候选参数信息
+        print("\n[4/4] 加载候选参数列表...")
         self._load_candidate_knobs()
         
-        print(f"知识库构建完成，共 {len(self.documents)} 条文档")
+        print(f"✓ 知识库构建完成，共 {len(self.documents)} 条文档")
         return self.knowledge_base
+    
+    def _load_lado_knowledge(self):
+        """加载 LADO 结构化知识库"""
+        try:
+            self.lado_kb = KnowledgeBase(db=self.db, base_path='./knowledge_collection')
+            
+            # 为每个知识单元创建多个文档（多视角）
+            for unit in self.lado_kb.get_all_units():
+                # 获取多视角嵌入文本
+                embedding_texts = unit.get_embedding_texts()
+                
+                # 1. 定义视角文档
+                if 'definition' in embedding_texts:
+                    self.documents.append({
+                        'knob': unit.name,
+                        'content': embedding_texts['definition'],
+                        'source': 'lado_definition',
+                        'scenario': self._infer_scenario_from_category(unit.category),
+                        'unit': unit,
+                        'view': 'definition'
+                    })
+                
+                # 2. 症状视角文档（关键！）
+                if 'symptom' in embedding_texts and unit.symptoms:
+                    self.documents.append({
+                        'knob': unit.name,
+                        'content': embedding_texts['symptom'],
+                        'source': 'lado_symptom',
+                        'scenario': self._infer_scenario_from_category(unit.category),
+                        'unit': unit,
+                        'view': 'symptom'
+                    })
+                
+                # 3. 调优视角文档
+                if 'tuning' in embedding_texts and unit.tuning_tips:
+                    self.documents.append({
+                        'knob': unit.name,
+                        'content': embedding_texts['tuning'],
+                        'source': 'lado_tuning',
+                        'scenario': self._infer_scenario_from_category(unit.category),
+                        'unit': unit,
+                        'view': 'tuning'
+                    })
+                
+                # 4. 依赖视角文档
+                if 'dependency' in embedding_texts:
+                    self.documents.append({
+                        'knob': unit.name,
+                        'content': embedding_texts['dependency'],
+                        'source': 'lado_dependency',
+                        'scenario': 'GENERAL',
+                        'unit': unit,
+                        'view': 'dependency'
+                    })
+                
+                # 添加到场景分类
+                scenario = self._infer_scenario_from_category(unit.category)
+                for doc in self.documents[-len(embedding_texts):]:
+                    self.knowledge_base[scenario].append(doc)
+            
+            print(f"  ✓ 从 LADO 知识库加载了 {len(self.lado_kb.knowledge_units)} 个参数")
+            print(f"  ✓ 生成了 {len(self.documents)} 个多视角文档")
+            
+        except Exception as e:
+            print(f"  警告：加载 LADO 知识库失败: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def _infer_scenario_from_category(self, category: str) -> str:
+        """根据类别推断场景"""
+        category_lower = category.lower()
+        
+        # OLTP 相关类别
+        if any(kw in category_lower for kw in ['connection', 'lock', 'autovacuum', 'buffer']):
+            return 'OLTP'
+        
+        # OLAP 相关类别
+        if any(kw in category_lower for kw in ['planner', 'parallel', 'work', 'maintenance']):
+            return 'OLAP'
+        
+        # WAL/复制相关
+        if any(kw in category_lower for kw in ['wal', 'replication', 'archive']):
+            return 'HYBRID'
+        
+        return 'GENERAL'
         
     def _load_tuning_lake(self):
         """加载 tuning_lake 中的调优建议"""

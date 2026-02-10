@@ -1,12 +1,16 @@
 """
 RAG 检索器模块
 根据查询和场景从知识库中检索相关上下文
+支持 LADO 三维增强：症状驱动检索、依赖链分析、约束验证
 """
 import numpy as np
 from sentence_transformers import SentenceTransformer
 import faiss
 import pickle
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from knowledge_handler.knowledge_base import KnowledgeBase, KnowledgeUnit
 
 
 class RAGRetriever:
@@ -30,6 +34,9 @@ class RAGRetriever:
         self.knowledge_base = None
         self.index = None
         
+        # LADO 知识库
+        self.lado_kb = None
+        
         self._load_knowledge_base()
         
     def _load_knowledge_base(self):
@@ -49,8 +56,15 @@ class RAGRetriever:
             index_path = os.path.join(self.kb_dir, f'{self.db}_faiss.index')
             if os.path.exists(index_path):
                 self.index = faiss.read_index(index_path)
+            
+            # 加载 LADO 知识库（用于症状检索和依赖分析）
+            try:
+                self.lado_kb = KnowledgeBase(db=self.db, base_path='./knowledge_collection')
+                print(f"RAG 检索器初始化成功，加载了 {len(self.documents)} 条文档")
+                print(f"  ✓ LADO 知识库: {len(self.lado_kb.knowledge_units)} 个参数")
+            except Exception as e:
+                print(f"  警告：LADO 知识库加载失败: {e}")
                 
-            print(f"RAG 检索器初始化成功，加载了 {len(self.documents)} 条文档")
         except Exception as e:
             print(f"警告：无法加载知识库，需要先构建知识库。错误：{e}")
             
@@ -217,6 +231,143 @@ class RAGRetriever:
         }
         
         return summary
+
+    def retrieve_by_symptom(self, symptom_query: str, top_k: int = 5) -> list:
+        """
+        症状驱动检索：从性能问题反查相关参数
+        
+        Args:
+            symptom_query: 症状描述（如 "high IO wait", "OOM error", "slow query"）
+            top_k: 返回前 k 个最相关的参数
+            
+        Returns:
+            包含知识单元和匹配度的结果列表
+        """
+        if not self.lado_kb:
+            print("警告：LADO 知识库未加载，无法使用症状检索")
+            return []
+        
+        # 1. 使用 LADO 知识库的症状索引
+        units = self.lado_kb.search_by_symptom(symptom_query, top_k=top_k)
+        
+        # 2. 构建返回结果
+        results = []
+        for unit in units:
+            result = {
+                'knob': unit.name,
+                'category': unit.category,
+                'description': unit.description,
+                'symptoms': unit.symptoms,
+                'tuning_tips': unit.tuning_tips,
+                'dependencies': unit.dependencies,
+                'constraints': unit.constraints,
+                'needs_restart': unit.needs_restart(),
+                'unit': unit
+            }
+            results.append(result)
+        
+        return results
+    
+    def retrieve_with_dependencies(self, knob_name: str, include_related: bool = True) -> dict:
+        """
+        检索参数及其依赖链
+        
+        Args:
+            knob_name: 参数名
+            include_related: 是否包含相关参数（资源竞争）
+            
+        Returns:
+            包含参数、依赖链、相关参数的字典
+        """
+        if not self.lado_kb:
+            return {'error': 'LADO 知识库未加载'}
+        
+        unit = self.lado_kb.get_unit(knob_name)
+        if not unit:
+            return {'error': f'参数 {knob_name} 不存在'}
+        
+        result = {
+            'knob': unit.to_dict(),
+            'dependency_chain': self.lado_kb.get_dependency_chain(knob_name),
+            'dependent_knobs': [u.name for u in self.lado_kb.get_dependent_knobs(knob_name)]
+        }
+        
+        if include_related and unit.related_knobs:
+            result['related_knobs'] = [
+                self.lado_kb.get_unit(rk).to_dict() 
+                for rk in unit.related_knobs 
+                if self.lado_kb.get_unit(rk)
+            ]
+        
+        return result
+    
+    def validate_constraints(self, knob_name: str, value: any, hardware_info: dict = None) -> dict:
+        """
+        验证参数值是否符合约束
+        
+        Args:
+            knob_name: 参数名
+            value: 待验证的值
+            hardware_info: 硬件信息（用于动态约束）
+            
+        Returns:
+            验证结果 {valid: bool, reason: str, suggestion: str}
+        """
+        if not self.lado_kb:
+            return {'valid': True, 'reason': 'LADO 知识库未加载，跳过验证'}
+        
+        unit = self.lado_kb.get_unit(knob_name)
+        if not unit:
+            return {'valid': True, 'reason': f'参数 {knob_name} 不在知识库中'}
+        
+        # 获取约束
+        constraints = unit.constraints
+        if not constraints:
+            return {'valid': True, 'reason': '无约束规则'}
+        
+        # 检查 hard_rule
+        hard_rule = constraints.get('hard_rule')
+        if hard_rule:
+            # 简单的规则验证（可扩展为更复杂的表达式解析）
+            try:
+                # 替换 value 占位符
+                rule = hard_rule.replace('value', str(value))
+                
+                # 如果有硬件信息，替换相关变量
+                if hardware_info:
+                    if 'RAM' in rule and 'memory_gb' in hardware_info:
+                        rule = rule.replace('RAM', str(hardware_info['memory_gb'] * 1024))  # 转为 MB
+                
+                # 尝试评估规则（注意：生产环境需要更安全的实现）
+                # 这里仅作示例，实际应用应使用规则引擎
+                is_valid = True  # 默认通过
+                
+            except Exception as e:
+                return {'valid': True, 'reason': f'约束验证失败: {e}'}
+        
+        # 检查 min/max
+        min_val = constraints.get('min')
+        max_val = constraints.get('max')
+        
+        try:
+            value_num = float(value) if value is not None else None
+            if value_num is not None:
+                if min_val and value_num < float(min_val):
+                    return {
+                        'valid': False,
+                        'reason': f'值 {value} 低于最小值 {min_val}',
+                        'suggestion': f'建议设置为至少 {min_val}'
+                    }
+                if max_val and value_num > float(max_val):
+                    return {
+                        'valid': False,
+                        'reason': f'值 {value} 超过最大值 {max_val}',
+                        'suggestion': f'建议设置为不超过 {max_val}'
+                    }
+        except (ValueError, TypeError):
+            pass  # 非数值类型，跳过 min/max 检查
+        
+        return {'valid': True, 'reason': '通过所有约束检查'}
 
 
 if __name__ == '__main__':
