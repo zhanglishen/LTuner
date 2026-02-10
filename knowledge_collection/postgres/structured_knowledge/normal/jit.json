@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "jit",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Enables or disables Just-In-Time compilation of expressions and queries for improved execution speed on complex operations.",
+  "symptoms": [
+    "Increased CPU usage during query planning",
+    "Higher memory allocation per query",
+    "Worse latency for simple OLTP queries",
+    "JIT compilation failures under resource pressure"
+  ],
+  "dependencies": [
+    "jit_provider",
+    "jit_above_cost",
+    "jit_inline_above_cost",
+    "jit_optimize_above_cost"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Disable 'jit' for OLTP workloads with short, simple queries; keep enabled for analytical or complex query workloads where JIT overhead is amortized. Monitor CPU and planning time before/after change.",
+  "default_formula": null
+}

@@ -1,1 +1,25 @@
-{"min_value": "0 ms", "max_value": "60 s", "suggested_values": ["60 s"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "wal_sender_timeout",
+  "category": "Replication",
+  "context": "user",
+  "unit": "ms",
+  "description": "Maximum time a WAL sender waits for replication activity before terminating the connection.",
+  "symptoms": [
+    "Delayed failover during network partitions",
+    "Stale replication connections consuming resources",
+    "Undetected primary crashes in distributed clusters",
+    "Unnecessary replication lag spikes"
+  ],
+  "dependencies": [
+    "max_replication_slots",
+    "wal_keep_size",
+    "synchronous_commit"
+  ],
+  "constraints": {
+    "hard_rule": "value == 0 || value >= 1000",
+    "min": "0",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set to 5–30 seconds (5000–30000 ms) for low-latency clusters; increase to 60–120 seconds in high-latency or unstable networks; set to 0 only for debugging or fully trusted networks.",
+  "default_formula": "60000"
+}

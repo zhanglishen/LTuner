@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["0.2"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "autovacuum_vacuum_scale_factor",
+  "category": "Autovacuum",
+  "context": "sighup",
+  "unit": null,
+  "description": "Fraction of a table's size (reltuples) that, when added to autovacuum_vacuum_threshold, determines the number of tuple updates or deletes required to trigger an autovacuum VACUUM.",
+  "symptoms": [
+    "Bloat accumulation in large tables",
+    "Query performance degradation due to outdated statistics",
+    "Increased disk usage from dead tuples",
+    "Long-running autovacuum operations blocking DML"
+  ],
+  "dependencies": [
+    "autovacuum_vacuum_threshold",
+    "autovacuum_enabled",
+    "vacuum_cost_delay"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0 and value <= 1",
+    "min": "0",
+    "max": "100"
+  },
+  "tuning_tips": "Lower this value (e.g., 0.05–0.1) for large, frequently updated tables to trigger vacuum sooner and prevent bloat; raise it (e.g., 0.3–0.5) for mostly read-only or small tables to reduce vacuum frequency.",
+  "default_formula": "0.2"
+}

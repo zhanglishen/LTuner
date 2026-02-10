@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": ["256 KB"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "checkpoint_flush_after",
+  "category": "WAL",
+  "context": "sighup",
+  "unit": "8kB",
+  "description": "Number of pages written during a checkpoint after which previously performed writes are flushed to disk by the OS.",
+  "symptoms": [
+    "High I/O latency spikes during checkpoints",
+    "Excessive dirty page accumulation in OS buffer cache",
+    "Checkpoint bloat leading to long recovery times",
+    "Inconsistent write throughput under heavy WAL load"
+  ],
+  "dependencies": [
+    "checkpoint_timeout",
+    "max_wal_size",
+    "wal_buffers",
+    "shared_buffers"
+  ],
+  "constraints": {
+    "hard_rule": "value <= 256",
+    "min": "0",
+    "max": "256"
+  },
+  "tuning_tips": "Increase cautiously (e.g., 64–128) on fast storage (NVMe/SSD) to smooth I/O; reduce or set to 0 on slow storage or when OS-level write coalescing is preferred. Monitor 'checkpoints_req' and 'buffers_checkpoint' metrics.",
+  "default_formula": "32"
+}

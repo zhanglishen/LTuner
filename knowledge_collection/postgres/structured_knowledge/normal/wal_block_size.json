@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "wal_block_size",
+  "category": "WAL",
+  "context": "postmaster",
+  "unit": "B",
+  "description": "The fixed block size used for WAL (Write-Ahead Log) files, determined at PostgreSQL compile time.",
+  "symptoms": [
+    "WAL file corruption if mismatched with compiled value",
+    "Startup failure when restoring from backup with incompatible block size",
+    "Inability to use WAL archives from different PostgreSQL builds"
+  ],
+  "dependencies": [
+    "wal_segment_size",
+    "block_size"
+  ],
+  "constraints": {
+    "hard_rule": "value == 8192",
+    "min": "8192",
+    "max": "8192"
+  },
+  "tuning_tips": "This parameter is read-only and cannot be tuned at runtime or via configuration; it must match the compile-time setting of the PostgreSQL binary. Ensure consistency across clusters, backups, and replication setups.",
+  "default_formula": "8192"
+}

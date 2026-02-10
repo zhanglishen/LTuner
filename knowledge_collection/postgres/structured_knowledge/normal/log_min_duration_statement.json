@@ -1,1 +1,26 @@
-{"min_value": "250 ms", "max_value": "1 s", "suggested_values": ["250 ms", "1 s"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "log_min_duration_statement",
+  "category": "Reporting and Logging",
+  "context": "superuser",
+  "unit": "ms",
+  "description": "Logs the execution duration of all SQL statements that run longer than the specified threshold.",
+  "symptoms": [
+    "Excessive log volume",
+    "Disk I/O saturation",
+    "Log file rotation failures",
+    "Increased latency due to synchronous logging overhead"
+  ],
+  "dependencies": [
+    "log_destination",
+    "logging_collector",
+    "log_statement",
+    "log_duration"
+  ],
+  "constraints": {
+    "hard_rule": "value >= -1",
+    "min": "-1",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Start with a conservative threshold like 1000 ms (1s) in production; lower only for targeted query performance investigations. Avoid setting to 0 (log all queries) on high-traffic systems.",
+  "default_formula": null
+}

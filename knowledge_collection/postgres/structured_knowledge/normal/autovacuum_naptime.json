@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": ["60 s"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "autovacuum_naptime",
+  "category": "Autovacuum",
+  "context": "sighup",
+  "unit": "s",
+  "description": "Time interval between successive autovacuum launcher process wakeups to check for tables needing vacuum or analyze.",
+  "symptoms": [
+    "Bloat accumulation in heavily updated tables",
+    "Query performance degradation due to outdated statistics",
+    "Increased disk usage from unreclaimed dead tuples",
+    "Long-running transactions blocking vacuum progress"
+  ],
+  "dependencies": [
+    "autovacuum_vacuum_scale_factor",
+    "autovacuum_analyze_scale_factor",
+    "autovacuum_max_workers",
+    "autovacuum_vacuum_threshold"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 1",
+    "min": "1",
+    "max": "2147483"
+  },
+  "tuning_tips": "Decrease naptime (e.g., to 10–30 s) on busy OLTP systems with frequent updates to prevent bloat and stale stats; increase it (e.g., to 120–300 s) on low-traffic systems to reduce launcher overhead.",
+  "default_formula": "60"
+}

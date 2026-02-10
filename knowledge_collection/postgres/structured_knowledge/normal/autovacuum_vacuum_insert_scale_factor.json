@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["0.2"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "autovacuum_vacuum_insert_scale_factor",
+  "category": "Autovacuum",
+  "context": "sighup",
+  "unit": null,
+  "description": "Fraction of a table's current size (reltuples) used to compute the insert-count threshold that triggers autovacuum for tables with heavy INSERT-only activity.",
+  "symptoms": [
+    "Bloat accumulation in INSERT-heavy tables",
+    "Increased disk usage due to dead tuples",
+    "Slower sequential scans from bloat-induced page inflation",
+    "Delayed cleanup causing transaction ID wraparound risk"
+  ],
+  "dependencies": [
+    "autovacuum_vacuum_insert_threshold",
+    "autovacuum_enabled",
+    "autovacuum_vacuum_scale_factor"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0 and value <= 100",
+    "min": "0",
+    "max": "100"
+  },
+  "tuning_tips": "Lower this value (e.g., 0.05–0.1) for tables with high INSERT rates and no UPDATE/DELETE to trigger vacuum sooner; raise it (e.g., 0.3–0.5) for mostly static or read-heavy tables to reduce vacuum frequency.",
+  "default_formula": "0.2"
+}

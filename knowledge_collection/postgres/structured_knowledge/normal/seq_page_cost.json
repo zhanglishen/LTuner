@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "seq_page_cost",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Planner's estimate of the cost of a sequentially fetched disk page relative to cpu_operator_cost.",
+  "symptoms": [
+    "Suboptimal query plans (e.g., choosing seq scan over index scan unnecessarily)",
+    "Poor join strategy selection",
+    "Excessive disk I/O due to missed index usage",
+    "Misleading EXPLAIN cost estimates"
+  ],
+  "dependencies": [
+    "random_page_cost",
+    "cpu_tuple_cost",
+    "cpu_operator_cost",
+    "effective_cache_size"
+  ],
+  "constraints": {
+    "hard_rule": "value > 0",
+    "min": "0",
+    "max": "1.79769e+308"
+  },
+  "tuning_tips": "Increase seq_page_cost on fast storage (e.g., NVMe) to discourage unnecessary sequential scans; decrease it on slow storage or when RAM is abundant and OS cache is effective. Tune in tandem with random_page_cost to reflect actual I/O latency ratios.",
+  "default_formula": "1.0 (baseline); adjust relative to random_page_cost based on storage latency ratio (e.g., random_page_cost / seq_page_cost ≈ 4 for HDD, ≈ 1.1–1.5 for SSD)"
+}

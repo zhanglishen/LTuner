@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "log_line_prefix",
+  "category": "Reporting and Logging",
+  "context": "sighup",
+  "unit": null,
+  "description": "A printf-style string prefixed to each PostgreSQL log line, with % escape sequences substituted by runtime values like timestamp, process ID, user, database, etc.",
+  "symptoms": [
+    "Inadequate log context for debugging",
+    "Failure to parse logs in external tools (e.g., PgBadger)",
+    "Missing audit trail for user or database activity",
+    "Difficulty correlating log entries with client sessions"
+  ],
+  "dependencies": [
+    "log_statement",
+    "log_min_duration_statement",
+    "log_destination",
+    "logging_collector"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Choose a prefix that includes sufficient identifiers (e.g., %m, %p, %u, %d, %a) for your observability and compliance needs; avoid excessive length or unsupported escapes to prevent parsing failures in log processors.",
+  "default_formula": null
+}

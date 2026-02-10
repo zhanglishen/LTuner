@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": ["2 MB"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_stack_depth",
+  "category": "Resource Usage / Memory",
+  "context": "superuser",
+  "unit": "kB",
+  "description": "Sets the maximum stack depth that PostgreSQL backends may use, in kilobytes.",
+  "symptoms": [
+    "Backend process crash",
+    "Stack overflow error",
+    "Unpredictable query failures during deep recursion or complex PL/pgSQL execution",
+    "Segmentation fault in backend processes"
+  ],
+  "dependencies": [
+    "shared_buffers",
+    "work_mem"
+  ],
+  "constraints": {
+    "hard_rule": "value < kernel_stack_limit_kb - 1024",
+    "min": "100",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set to kernel's stack limit minus ~1 MB safety margin; never exceed kernel limit. Verify kernel stack size via 'ulimit -s' (in KB) before adjusting.",
+  "default_formula": "min(2048, kernel_stack_limit_kb - 1024)"
+}

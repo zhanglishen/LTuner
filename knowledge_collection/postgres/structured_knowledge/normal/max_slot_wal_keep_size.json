@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_slot_wal_keep_size",
+  "category": "Replication",
+  "context": "sighup",
+  "unit": "MB",
+  "description": "Limits the maximum disk space (in MB) that replication slots may reserve for WAL files in pg_wal; negative values disable the limit.",
+  "symptoms": [
+    "WAL disk bloat",
+    "pg_wal directory exhaustion",
+    "replication slot failure due to WAL retention violation",
+    "unintended WAL recycling causing replica divergence"
+  ],
+  "dependencies": [
+    "wal_keep_size",
+    "max_replication_slots",
+    "archive_mode"
+  ],
+  "constraints": {
+    "hard_rule": "value == -1 || value <= (disk_space_available_for_pg_wal * 0.8)",
+    "min": "-1",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set to a positive value only when you need to bound WAL retention for replication slots and have predictable replica lag; monitor pg_replication_slots.active and pg_stat_replication to avoid exceeding the limit.",
+  "default_formula": "-1"
+}

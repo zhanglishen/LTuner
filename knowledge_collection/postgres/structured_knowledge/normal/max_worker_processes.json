@@ -1,1 +1,25 @@
-{"min_value": "8", "max_value": null, "suggested_values": ["8"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_worker_processes",
+  "category": "Resource Usage",
+  "context": "postmaster",
+  "unit": "count",
+  "description": "Maximum number of concurrent background worker processes that the PostgreSQL instance can support, including logical replication workers, parallel query workers, and custom background workers.",
+  "symptoms": [
+    "Parallel query execution disabled",
+    "Logical replication lag on standby",
+    "Background worker startup failures",
+    "Inability to scale parallel scans or joins"
+  ],
+  "dependencies": [
+    "max_parallel_workers",
+    "max_parallel_workers_per_gather",
+    "max_logical_replication_workers"
+  ],
+  "constraints": {
+    "hard_rule": "value <= 262143 && value >= 0",
+    "min": "0",
+    "max": "262143"
+  },
+  "tuning_tips": "Set to at least the number of CPU cores; match or exceed the master's value on standby servers. Increase only if deploying many parallel queries, logical replication, or custom background workers.",
+  "default_formula": "CPU_CORES"
+}

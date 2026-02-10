@@ -1,1 +1,26 @@
-{"min_value": "3 hours", "max_value": "3 days", "suggested_values": ["6 hours", "1 day"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "old_snapshot_threshold",
+  "category": "Resource Usage",
+  "context": "postmaster",
+  "unit": "min",
+  "description": "Maximum age of a snapshot before it may trigger 'snapshot too old' errors; enables early vacuuming of dead tuples to prevent bloat.",
+  "symptoms": [
+    "snapshot too old error",
+    "table bloat due to retained dead tuples",
+    "transaction ID wraparound risk",
+    "increased disk usage",
+    "long-running queries failing unexpectedly"
+  ],
+  "dependencies": [
+    "vacuum_defer_cleanup_age",
+    "max_connections",
+    "work_mem"
+  ],
+  "constraints": {
+    "hard_rule": "value >= -1 and value <= 86400",
+    "min": "-1",
+    "max": "86400"
+  },
+  "tuning_tips": "Set to a value (in minutes) slightly longer than your longest expected query or transaction duration; avoid extremes—too low increases 'snapshot too old' errors, too high delays vacuum and risks bloat. Requires server restart.",
+  "default_formula": "-1"
+}

@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": ["2.0"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "bgwriter_lru_multiplier",
+  "category": "Resource Usage",
+  "context": "sighup",
+  "unit": null,
+  "description": "Multiplier applied to the average recent buffer usage to determine how many dirty buffers the background writer flushes per cycle.",
+  "symptoms": [
+    "Excessive checkpoint spikes",
+    "High I/O wait during peak writes",
+    "Buffer starvation under heavy DML load",
+    "Increased transaction latency due to synchronous writes"
+  ],
+  "dependencies": [
+    "bgwriter_delay",
+    "bgwriter_lru_maxpages",
+    "checkpoint_completion_target",
+    "shared_buffers"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0 and value <= 10",
+    "min": "0",
+    "max": "10"
+  },
+  "tuning_tips": "Increase for write-heavy workloads with large shared_buffers to reduce foreground write pressure; decrease if background writer activity causes I/O contention. Monitor pg_stat_bgwriter to assess effectiveness.",
+  "default_formula": "2.0"
+}

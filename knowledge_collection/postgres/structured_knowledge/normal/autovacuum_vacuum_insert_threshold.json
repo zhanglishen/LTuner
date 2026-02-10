@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "autovacuum_vacuum_insert_threshold",
+  "category": "Autovacuum",
+  "context": "sighup",
+  "unit": "count",
+  "description": "Minimum number of newly inserted tuples that triggers an autovacuum VACUUM operation on a table; -1 disables insert-triggered vacuums.",
+  "symptoms": [
+    "Bloat accumulation in high-insert tables",
+    "Query performance degradation due to outdated statistics",
+    "Increased disk usage from dead tuple buildup",
+    "Longer vacuum runtime due to deferred cleanup"
+  ],
+  "dependencies": [
+    "autovacuum_vacuum_scale_factor",
+    "autovacuum_vacuum_threshold",
+    "vacuum_insert_percent_threshold"
+  ],
+  "constraints": {
+    "hard_rule": "value >= -1",
+    "min": "-1",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Lower this value (e.g., 100–500) for tables with frequent inserts and rapid bloat; raise it or set to -1 for append-only or bulk-loaded tables where insert-triggered vacuums are unnecessary. Prefer per-table settings for heterogeneous workloads.",
+  "default_formula": "1000"
+}

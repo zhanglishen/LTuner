@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "archive_command",
+  "category": "WAL",
+  "context": "sighup",
+  "unit": null,
+  "description": "Shell command executed to archive a completed WAL file segment; supports %p (full path) and %f (filename) placeholders.",
+  "symptoms": [
+    "WAL files not archived",
+    "Archive timeout errors",
+    "Replication lag due to missing WAL segments",
+    "Disk space exhaustion in pg_wal"
+  ],
+  "dependencies": [
+    "archive_mode",
+    "wal_level",
+    "archive_timeout"
+  ],
+  "constraints": {
+    "hard_rule": "archive_mode must be 'on' or 'always' for archive_command to take effect"
+  },
+  "tuning_tips": "Set to a reliable, idempotent shell command (e.g., rsync or cp with proper error handling); ensure target directory is writable by the postgres user and has sufficient space; test exit codes rigorously.",
+  "default_formula": null
+}

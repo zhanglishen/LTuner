@@ -1,1 +1,18 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "trace_sort",
+  "category": "Developer Options",
+  "context": "user",
+  "unit": null,
+  "description": "Enables logging of detailed resource usage metrics during sort operations for debugging purposes.",
+  "symptoms": [
+    "Excessive log volume",
+    "Increased disk I/O due to verbose logging",
+    "Slower sort performance under high concurrency"
+  ],
+  "dependencies": [],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Enable only temporarily during development or troubleshooting of sort-heavy queries; disable in production to avoid log bloat and performance overhead.",
+  "default_formula": null
+}

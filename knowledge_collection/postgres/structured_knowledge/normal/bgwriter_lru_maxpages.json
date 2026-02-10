@@ -1,1 +1,26 @@
-{"min_value": "0", "max_value": null, "suggested_values": ["100"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "bgwriter_lru_maxpages",
+  "category": "Resource Usage / Background Writer",
+  "context": "sighup",
+  "unit": "count",
+  "description": "Maximum number of dirty buffers the background writer flushes to disk per LRU scan round.",
+  "symptoms": [
+    "High dirty buffer count",
+    "Spike in backend write I/O during checkpoints",
+    "Increased checkpoint frequency",
+    "Buffer allocation stalls under heavy write load"
+  ],
+  "dependencies": [
+    "bgwriter_delay",
+    "bgwriter_lru_multiplier",
+    "checkpoint_completion_target",
+    "shared_buffers"
+  ],
+  "constraints": {
+    "hard_rule": "value <= shared_buffers",
+    "min": "0",
+    "max": "1073741823"
+  },
+  "tuning_tips": "Increase gradually (e.g., by 50–100) if dirty buffers consistently exceed 80% of shared_buffers; reduce if background writer competes with backends for I/O bandwidth. Set to 0 only to disable LRU flushing entirely.",
+  "default_formula": "min(100, shared_buffers * 0.01)"
+}

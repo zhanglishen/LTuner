@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["100000"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "jit_above_cost",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Threshold cost above which PostgreSQL uses JIT compilation for query execution.",
+  "symptoms": [
+    "Excessive CPU usage during planning",
+    "Increased query planning time",
+    "Degraded performance on simple queries",
+    "JIT compilation overhead outweighing benefits"
+  ],
+  "dependencies": [
+    "jit_enabled",
+    "jit_inline_above_cost",
+    "jit_optimize_above_cost"
+  ],
+  "constraints": {
+    "hard_rule": "value >= -1",
+    "min": "-1",
+    "max": "1.79769e+308"
+  },
+  "tuning_tips": "Increase to defer JIT compilation to more expensive queries; decrease to enable JIT earlier, but avoid values too low (< 1000) unless workload benefits from JIT on medium-complexity queries. Set to -1 to disable JIT entirely.",
+  "default_formula": "100000"
+}

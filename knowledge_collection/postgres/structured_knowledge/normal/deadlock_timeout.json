@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": ["1 s"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "deadlock_timeout",
+  "category": "Lock Management",
+  "context": "user",
+  "unit": "ms",
+  "description": "Time to wait on a lock before initiating a deadlock detection check.",
+  "symptoms": [
+    "Unnecessary CPU overhead from frequent deadlock checks",
+    "Delayed deadlock error reporting",
+    "Excessive 'lock wait' log messages when log_lock_waits is enabled",
+    "False-positive deadlock aborts under high contention"
+  ],
+  "dependencies": [
+    "log_lock_waits"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 1",
+    "min": "1",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set slightly above the 95th percentile of typical transaction duration to avoid premature deadlock checks; increase cautiously if false deadlocks are observed, but avoid setting too high to prevent delayed error reporting.",
+  "default_formula": "1000"
+}

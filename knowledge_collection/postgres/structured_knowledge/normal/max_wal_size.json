@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": ["4 GB"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_wal_size",
+  "category": "WAL",
+  "context": "sighup",
+  "unit": "MB",
+  "description": "Maximum size of WAL files generated between automatic checkpoints; triggers a checkpoint when exceeded.",
+  "symptoms": [
+    "Frequent checkpoints under write load",
+    "Extended crash recovery time",
+    "Unnecessary I/O pressure from premature checkpoints",
+    "WAL bloat under high write throughput"
+  ],
+  "dependencies": [
+    "min_wal_size",
+    "checkpoint_timeout",
+    "wal_keep_size",
+    "checkpoint_completion_target"
+  ],
+  "constraints": {
+    "hard_rule": "value >= min_wal_size",
+    "min": "2",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Increase to reduce checkpoint frequency under heavy write workloads; balance with available disk space and acceptable crash recovery time. Prefer timeout-driven over size-driven checkpoints where possible.",
+  "default_formula": "RAM * 0.02"
+}

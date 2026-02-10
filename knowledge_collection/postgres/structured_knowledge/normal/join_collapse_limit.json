@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": ["1"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "join_collapse_limit",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Controls the maximum number of FROM items after which explicit JOIN constructs are not flattened into a single FROM list; affects join reordering and plan generation.",
+  "symptoms": [
+    "Excessive query planning time",
+    "Suboptimal join order selection",
+    "Poor execution plans for complex multi-table joins",
+    "Unintended join reordering despite explicit JOIN syntax"
+  ],
+  "dependencies": [
+    "from_collapse_limit",
+    "enable_hashjoin",
+    "enable_mergejoin",
+    "enable_nestloop"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 1",
+    "min": "1",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set to 1 to disable join flattening and enforce explicit join order for predictable plans; increase only if queries with many explicit JOINs suffer from poor plan choices, but monitor planning overhead.",
+  "default_formula": "8"
+}

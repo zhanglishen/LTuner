@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": "142500000", "suggested_values": ["150000000"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "vacuum_freeze_table_age",
+  "category": "WAL",
+  "context": "user",
+  "unit": "count",
+  "description": "Age (in transaction count) at which VACUUM scans the entire table to freeze tuples and prevent transaction ID wraparound.",
+  "symptoms": [
+    "transaction ID wraparound risk",
+    "unplanned full-table autovacuum storms",
+    "increased I/O pressure during vacuum",
+    "long-running vacuum blocking queries"
+  ],
+  "dependencies": [
+    "autovacuum_freeze_max_age",
+    "vacuum_freeze_min_age"
+  ],
+  "constraints": {
+    "hard_rule": "value <= autovacuum_freeze_max_age * 0.95",
+    "min": "0",
+    "max": "2000000000"
+  },
+  "tuning_tips": "Set lower than autovacuum_freeze_max_age (typically 80–95% of it) to trigger proactive freezing before wraparound danger; avoid setting too low to prevent excessive full-table vacuums.",
+  "default_formula": "autovacuum_freeze_max_age * 0.95"
+}

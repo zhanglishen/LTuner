@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["0.1"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "autovacuum_analyze_scale_factor",
+  "category": "Autovacuum",
+  "context": "sighup",
+  "unit": null,
+  "description": "Fraction of a table's current row count that, when added to autovacuum_analyze_threshold, determines the number of row changes (inserts/updates/deletes) that trigger an automatic ANALYZE.",
+  "symptoms": [
+    "Stale query plans due to outdated statistics",
+    "Poor join order or index selection by planner",
+    "Sudden query performance regressions after bulk DML",
+    "Excessive or unnecessary ANALYZE runs"
+  ],
+  "dependencies": [
+    "autovacuum_analyze_threshold",
+    "autovacuum_enabled",
+    "analyze_timeout"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0 and value <= 100",
+    "min": "0",
+    "max": "100"
+  },
+  "tuning_tips": "Lower this value (e.g., 0.02–0.05) for tables with frequent DML to keep statistics fresher; raise it (e.g., 0.2–0.5) for large, mostly-read-only tables to reduce ANALYZE overhead.",
+  "default_formula": "0.1"
+}

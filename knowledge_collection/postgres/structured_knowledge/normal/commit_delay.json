@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["0 ms"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "commit_delay",
+  "category": "WAL",
+  "context": "sighup",
+  "unit": "us",
+  "description": "Introduces a microsecond delay before flushing WAL to disk during commit, enabling group commit when other transactions are active.",
+  "symptoms": [
+    "Increased transaction latency",
+    "Reduced group commit efficiency",
+    "Higher WAL flush frequency",
+    "Suboptimal throughput under concurrent commit load"
+  ],
+  "dependencies": [
+    "commit_siblings",
+    "synchronous_commit",
+    "wal_sync_method"
+  ],
+  "constraints": {
+    "hard_rule": "value <= 100000",
+    "min": "0",
+    "max": "100000"
+  },
+  "tuning_tips": "Set to a small nonzero value (e.g., 1000–10000 us) only under high concurrent commit workloads where group commit opportunities exist; avoid on latency-sensitive systems. Always pair with appropriate commit_siblings.",
+  "default_formula": "0"
+}

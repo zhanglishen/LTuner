@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on", "off"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "enable_mergejoin",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Controls whether the query planner considers merge join as a possible execution strategy for joining tables.",
+  "symptoms": [
+    "Suboptimal query plans",
+    "Increased query execution time",
+    "Higher CPU usage due to less efficient join methods",
+    "Excessive disk I/O from nested loop or hash joins on large sorted datasets"
+  ],
+  "dependencies": [
+    "enable_hashjoin",
+    "enable_nestloop",
+    "enable_sort",
+    "effective_cache_size"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Disable only if merge joins consistently produce worse performance than alternatives for your workload; monitor EXPLAIN output to compare plan costs before and after. Typically left enabled unless specific join patterns benefit from forcing other methods.",
+  "default_formula": null
+}

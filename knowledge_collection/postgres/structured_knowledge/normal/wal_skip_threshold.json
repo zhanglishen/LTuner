@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": ["2048 KB", "2 MB"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "wal_skip_threshold",
+  "category": "WAL",
+  "context": "user",
+  "unit": "kB",
+  "description": "Minimum size (in kB) of a new file for which PostgreSQL skips WAL logging and instead uses direct fsync for persistence, applicable only when wal_level = 'minimal'.",
+  "symptoms": [
+    "Unnecessary WAL bloat",
+    "Excessive fsync overhead on small files",
+    "Data loss risk under crash when wal_level = minimal",
+    "Slower recovery due to inconsistent write methods"
+  ],
+  "dependencies": [
+    "wal_level"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0 and value <= 2147483647",
+    "min": "0",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Increase this value to reduce WAL volume for large bulk operations when wal_level = 'minimal'; decrease only if you observe excessive fsyncs on moderately sized files and can tolerate higher WAL overhead. Avoid changing unless using wal_level = 'minimal'.",
+  "default_formula": "2048"
+}

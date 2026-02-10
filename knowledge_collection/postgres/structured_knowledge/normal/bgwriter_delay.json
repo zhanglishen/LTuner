@@ -1,1 +1,26 @@
-{"min_value": "10 ms", "max_value": "200 ms", "suggested_values": ["200 ms"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "bgwriter_delay",
+  "category": "Resource Usage",
+  "context": "sighup",
+  "unit": "ms",
+  "description": "Sleep interval between background writer activity rounds, controlling how frequently it wakes to write dirty buffers to disk.",
+  "symptoms": [
+    "Excessive checkpoint spikes",
+    "High dirty buffer accumulation",
+    "Increased I/O latency during peak writes",
+    "Longer recovery times after crash"
+  ],
+  "dependencies": [
+    "bgwriter_lru_maxpages",
+    "bgwriter_lru_multiplier",
+    "checkpoint_timeout",
+    "max_wal_size"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 10 and value <= 10000",
+    "min": "10",
+    "max": "10000"
+  },
+  "tuning_tips": "Reduce for high-write workloads to spread I/O more evenly; increase to reduce background writer CPU and I/O overhead on lightly loaded systems. Always use multiples of 10ms.",
+  "default_formula": "200"
+}

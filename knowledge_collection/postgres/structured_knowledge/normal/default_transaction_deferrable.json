@@ -1,1 +1,21 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "default_transaction_deferrable",
+  "category": "Client Connection Defaults",
+  "context": "user",
+  "unit": null,
+  "description": "Sets the default deferrable status for new transactions, enabling delayed scheduling of read-only serializable transactions to improve concurrency.",
+  "symptoms": [
+    "Serialization failures in long-running read-only queries",
+    "Unnecessary transaction retries under high contention",
+    "Poor throughput for read-only serializable workloads"
+  ],
+  "dependencies": [
+    "default_transaction_isolation",
+    "transaction_deferrable"
+  ],
+  "constraints": {
+    "hard_rule": "value == true implies default_transaction_isolation == 'serializable' and transaction is read-only"
+  },
+  "tuning_tips": "Enable only for applications issuing long-running, read-only serializable transactions; leave disabled for mixed or read-write workloads since it has no effect there.",
+  "default_formula": null
+}

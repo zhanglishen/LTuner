@@ -1,1 +1,22 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "wal_init_zero",
+  "category": "WAL",
+  "context": "superuser",
+  "unit": null,
+  "description": "Controls whether new WAL files are pre-filled with zeroes before first use.",
+  "symptoms": [
+    "Increased WAL initialization latency on COW filesystems",
+    "Wasted I/O bandwidth on filesystems that optimize sparse file allocation",
+    "Slower WAL file creation under high write load",
+    "Unnecessary disk space pre-allocation"
+  ],
+  "dependencies": [
+    "wal_keep_size",
+    "wal_segment_size"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Disable wal_init_zero on Copy-On-Write (COW) filesystems like ZFS or Btrfs to avoid redundant zero writes; leave enabled on traditional filesystems (ext4, XFS) for predictable WAL file layout and reduced fragmentation.",
+  "default_formula": null
+}

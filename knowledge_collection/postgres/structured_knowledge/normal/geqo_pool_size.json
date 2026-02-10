@@ -1,1 +1,24 @@
-{"min_value": "100", "max_value": "1000", "suggested_values": ["100", "1000"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "geqo_pool_size",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Number of individuals in the genetic population used by the Genetic Query Optimizer (GEQO) for exploring query plans.",
+  "symptoms": [
+    "Suboptimal query plans for complex joins",
+    "Excessive planning time for large queries",
+    "Poor performance on queries with many joined tables",
+    "Inconsistent plan selection across similar queries"
+  ],
+  "dependencies": [
+    "geqo_effort",
+    "geqo_threshold"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0",
+    "min": "0",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set to 100–1000 for complex multi-join queries; leave at 0 to let PostgreSQL auto-select based on geqo_effort and table count. Increase only if GEQO produces poor plans and planning time is acceptable.",
+  "default_formula": "0 (auto-selected as function of geqo_effort and number of tables)"
+}

@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "autovacuum_work_mem",
+  "category": "Resource Usage / Memory",
+  "context": "sighup",
+  "unit": "kB",
+  "description": "Sets the maximum memory available to each autovacuum worker process for operations like vacuuming and analyzing tables.",
+  "symptoms": [
+    "Slow autovacuum progress",
+    "Excessive disk I/O during vacuum",
+    "Long-running autovacuum tasks blocking table bloat",
+    "High CPU or I/O wait during maintenance windows"
+  ],
+  "dependencies": [
+    "maintenance_work_mem",
+    "autovacuum_max_workers",
+    "work_mem"
+  ],
+  "constraints": {
+    "hard_rule": "value <= maintenance_work_mem",
+    "min": "-1",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set it higher than default (-1) to speed up autovacuum on large tables, but avoid setting it too high to prevent memory contention with other workers or backend processes. Monitor autovacuum duration and memory pressure before increasing.",
+  "default_formula": "maintenance_work_mem / autovacuum_max_workers"
+}

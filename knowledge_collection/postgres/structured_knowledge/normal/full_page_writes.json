@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "full_page_writes",
+  "category": "WAL",
+  "context": "sighup",
+  "unit": null,
+  "description": "When enabled, writes full disk pages to WAL on first modification after a checkpoint to enable safe crash recovery.",
+  "symptoms": [
+    "Increased WAL write volume",
+    "Higher I/O pressure during peak write loads",
+    "Data corruption risk after unclean shutdown if disabled",
+    "Recovery failure due to incomplete page state"
+  ],
+  "dependencies": [
+    "checkpoint_timeout",
+    "wal_level",
+    "fsync"
+  ],
+  "constraints": {
+    "hard_rule": "value == true if wal_level >= 'replica' and fsync == true"
+  },
+  "tuning_tips": "Keep enabled in production for data safety; only disable temporarily for bulk load performance testing on isolated, non-critical systems with guaranteed clean shutdowns.",
+  "default_formula": null
+}

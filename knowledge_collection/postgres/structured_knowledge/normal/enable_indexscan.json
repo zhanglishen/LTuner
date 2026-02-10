@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on", "off"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "enable_indexscan",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Controls whether the query planner considers index-scan plan types when generating execution plans.",
+  "symptoms": [
+    "Suboptimal query plans",
+    "Unnecessarily slow point queries on indexed columns",
+    "Excessive sequential scans on large tables",
+    "Higher CPU and I/O usage for selective queries"
+  ],
+  "dependencies": [
+    "enable_seqscan",
+    "enable_bitmapscan",
+    "enable_indexonlyscan",
+    "random_page_cost",
+    "effective_cache_size"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Leave enabled ('on') unless diagnosing planner misestimation issues; disable ('off') only temporarily for testing or to force sequential scans in rare cases where index usage leads to poor performance due to inaccurate statistics or cost model assumptions.",
+  "default_formula": null
+}

@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "autovacuum",
+  "category": "Autovacuum",
+  "context": "sighup",
+  "unit": null,
+  "description": "Enables or disables the autovacuum launcher daemon, which automatically runs VACUUM and ANALYZE operations to maintain table health and optimizer statistics.",
+  "symptoms": [
+    "Bloat accumulation in tables",
+    "Stale query planner statistics",
+    "Long-running transaction blocking due to frozen XID wraparound risk",
+    "Unexpected query plan regressions"
+  ],
+  "dependencies": [
+    "track_counts",
+    "autovacuum_vacuum_scale_factor",
+    "autovacuum_analyze_scale_factor",
+    "autovacuum_max_workers"
+  ],
+  "constraints": {
+    "hard_rule": "value == true if track_counts == true, otherwise autovacuum is ineffective"
+  },
+  "tuning_tips": "Keep enabled ('on') in production unless managing vacuum manually; disable only for specific short-term maintenance windows or immutable archival tables.",
+  "default_formula": "true (enabled by default)"
+}

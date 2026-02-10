@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "enable_seqscan",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Controls whether the query planner considers sequential scan plan types during query optimization.",
+  "symptoms": [
+    "Suboptimal query plans",
+    "Increased execution time for large-table queries",
+    "Index-only scans forced unnecessarily",
+    "Higher CPU usage due to inefficient join or filter strategies"
+  ],
+  "dependencies": [
+    "enable_indexscan",
+    "enable_bitmapscan",
+    "enable_tidscan",
+    "geqo",
+    "random_page_cost"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Keep enabled (default 'on') unless debugging plan choices or enforcing index usage in controlled scenarios; disabling may cause the planner to choose expensive alternatives like nested loops over large tables.",
+  "default_formula": null
+}

@@ -1,1 +1,22 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on", "off"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "huge_pages",
+  "category": "Resource Usage / Memory",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Controls whether PostgreSQL uses huge pages for its shared memory segment on Linux or Windows.",
+  "symptoms": [
+    "increased TLB misses",
+    "higher CPU usage in memory management",
+    "shared memory allocation failure when 'on' but system huge pages are unavailable",
+    "unnecessary kernel memory fragmentation when misconfigured"
+  ],
+  "dependencies": [
+    "shared_buffers",
+    "sysctl vm.nr_hugepages"
+  ],
+  "constraints": {
+    "hard_rule": "value == 'on' implies system has sufficient huge pages configured (vm.nr_hugepages >= ceil(shared_buffers / hugepage_size))"
+  },
+  "tuning_tips": "Start with default 'try'; only set to 'on' after verifying adequate huge pages are reserved in the OS and validating performance gain; avoid 'on' in containerized or shared environments without guaranteed huge page availability.",
+  "default_formula": null
+}

@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_locks_per_transaction",
+  "category": "Lock Management",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Sets the maximum number of object locks allocated per transaction; total shared lock table size is derived from max_locks_per_transaction * (max_connections + max_prepared_transactions).",
+  "symptoms": [
+    "lock table overflow error",
+    "failed transactions due to 'out of shared memory'",
+    "high shared memory usage",
+    "replication failure on standby if lower than master"
+  ],
+  "dependencies": [
+    "max_connections",
+    "max_prepared_transactions"
+  ],
+  "constraints": {
+    "hard_rule": "value * (max_connections + max_prepared_transactions) * 280 < shared_buffers",
+    "min": "10",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Increase this value if encountering 'out of shared memory' errors during complex DML involving many tables or partitions; monitor lock usage via pg_locks and adjust incrementally, keeping in mind its impact on shared memory footprint.",
+  "default_formula": "64"
+}

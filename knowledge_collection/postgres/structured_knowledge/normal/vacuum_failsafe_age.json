@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "vacuum_failsafe_age",
+  "category": "WAL",
+  "context": "user",
+  "unit": null,
+  "description": "Maximum transaction age (in XIDs) at which VACUUM is forced to run even if autovacuum is disabled or delayed, preventing transaction ID wraparound failure.",
+  "symptoms": [
+    "Transaction ID wraparound outage",
+    "Database shutdown due to XID exhaustion",
+    "Autovacuum unable to prevent wraparound",
+    "Frequent 'database must be vacuumed within N transactions' errors"
+  ],
+  "dependencies": [
+    "autovacuum",
+    "vacuum_freeze_min_age",
+    "vacuum_freeze_table_age",
+    "max_connections"
+  ],
+  "constraints": {
+    "hard_rule": "value <= max_val and value >= min_val and value < 2^31",
+    "min": "0",
+    "max": "2100000000"
+  },
+  "tuning_tips": "Keep near the default (1.6B) unless running very high-transaction workloads; lowering it increases VACUUM frequency but improves safety; raising it risks wraparound if autovacuum lags.",
+  "default_formula": "min(1600000000, 0.75 * (2^31 - 1))"
+}

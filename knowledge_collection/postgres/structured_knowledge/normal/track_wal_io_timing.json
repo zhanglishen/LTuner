@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "track_wal_io_timing",
+  "category": "Statistics",
+  "context": "superuser",
+  "unit": null,
+  "description": "Enables collection of timing statistics for WAL I/O operations, including read and write latency.",
+  "symptoms": [
+    "Inaccurate WAL I/O performance diagnostics",
+    "Missing latency metrics in pg_stat_wal",
+    "Inability to identify WAL-related I/O bottlenecks",
+    "Misleading performance reports from monitoring tools"
+  ],
+  "dependencies": [
+    "track_activity_query_size",
+    "track_counts",
+    "pg_stat_statements.track"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Enable only when diagnosing WAL I/O latency issues; disable otherwise as it adds minor overhead to every WAL I/O operation.",
+  "default_formula": null
+}

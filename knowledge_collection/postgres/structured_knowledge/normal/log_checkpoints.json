@@ -1,1 +1,22 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "log_checkpoints",
+  "category": "Reporting and Logging",
+  "context": "sighup",
+  "unit": null,
+  "description": "Enables logging of checkpoint and restartpoint events, including buffer counts and duration.",
+  "symptoms": [
+    "Inability to diagnose checkpoint-related performance spikes",
+    "No visibility into checkpoint frequency or duration",
+    "Difficulty correlating IO bursts with checkpoint activity"
+  ],
+  "dependencies": [
+    "checkpoint_timeout",
+    "max_wal_size",
+    "min_wal_size"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Enable during performance investigations or capacity planning; disable in production if log volume is a concern. Requires SIGHUP to reload.",
+  "default_formula": null
+}

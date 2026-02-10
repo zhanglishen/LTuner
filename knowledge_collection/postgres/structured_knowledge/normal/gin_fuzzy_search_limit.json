@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "gin_fuzzy_search_limit",
+  "category": "Index",
+  "context": "user",
+  "unit": null,
+  "description": "Sets a soft upper limit on the number of rows returned by GIN index fuzzy search scans.",
+  "symptoms": [
+    "Inaccurate fuzzy search results",
+    "Premature truncation of search result sets",
+    "Poor recall in full-text or trigram-based searches",
+    "Unexpected empty or sparse results for broad queries"
+  ],
+  "dependencies": [
+    "gin_pending_list_limit",
+    "maintenance_work_mem"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0",
+    "min": "0",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Increase cautiously to improve fuzzy search recall; monitor query latency and memory usage. Set to 0 to disable the limit entirely, but beware of unbounded result sets under high-cardinality patterns.",
+  "default_formula": null
+}

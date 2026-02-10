@@ -1,1 +1,24 @@
-{"min_value": "1.5", "max_value": "8.0", "suggested_values": ["1.5", "2.0"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "hash_mem_multiplier",
+  "category": "Resource Usage / Memory",
+  "context": "user",
+  "unit": null,
+  "description": "Multiplier applied to work_mem to determine maximum memory available for hash-based operations (e.g., hash joins, hash aggregates).",
+  "symptoms": [
+    "OOM error",
+    "High memory usage",
+    "Excessive memory pressure",
+    "Query cancellation due to memory limits",
+    "Swapping under heavy hash workloads"
+  ],
+  "dependencies": [
+    "work_mem"
+  ],
+  "constraints": {
+    "hard_rule": "value * work_mem < RAM * 0.5",
+    "min": "1",
+    "max": "1000"
+  },
+  "tuning_tips": "Start with 1.5–2.0 for mixed workloads; increase up to 4.0–8.0 only if work_mem is large (>40MB) and hash-heavy queries show memory starvation; monitor RSS and OOM kills.",
+  "default_formula": "1.0"
+}

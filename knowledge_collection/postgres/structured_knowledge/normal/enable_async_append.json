@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "enable_async_append",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Enables or disables the query planner's use of async append execution plans, which allow parallel processing of UNION ALL branches with asynchronous startup.",
+  "symptoms": [
+    "Suboptimal parallel UNION ALL performance",
+    "Increased query latency for large UNION ALL queries",
+    "Underutilization of available workers in parallel plans"
+  ],
+  "dependencies": [
+    "max_parallel_workers_per_gather",
+    "parallel_setup_cost",
+    "parallel_tuple_cost",
+    "enable_parallel_append"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Enable this setting when running queries with large UNION ALL operations and sufficient parallel worker capacity; disable only if async append plans cause unexpected resource contention or regressions in specific workloads.",
+  "default_formula": null
+}

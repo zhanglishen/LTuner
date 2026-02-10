@@ -1,1 +1,25 @@
-{"min_value": "0", "max_value": "30000 ms", "suggested_values": ["0", "30000 ms"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_standby_streaming_delay",
+  "category": "Replication",
+  "context": "sighup",
+  "unit": "ms",
+  "description": "Maximum delay before canceling conflicting read-only queries on a hot standby when applying streamed WAL data.",
+  "symptoms": [
+    "Query cancellations under replication load",
+    "Unpredictable read query timeouts",
+    "Excessive lag during high-write workloads on primary",
+    "Stale reads due to aggressive query cancellation"
+  ],
+  "dependencies": [
+    "hot_standby_feedback",
+    "max_standby_archive_delay",
+    "wal_receiver_timeout"
+  ],
+  "constraints": {
+    "hard_rule": "value >= -1",
+    "min": "-1",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set to 0 to cancel conflicting queries immediately; set higher (e.g., 30000–60000) to tolerate brief lag and reduce cancellations; avoid indefinite (-1) in latency-sensitive read workloads. Always pair with hot_standby_feedback for better conflict avoidance.",
+  "default_formula": "30000"
+}

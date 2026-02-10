@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["4 MB"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "gin_pending_list_limit",
+  "category": "Index",
+  "context": "user",
+  "unit": "kB",
+  "description": "Sets the maximum size (in kB) of the pending list used during GIN index insertions before entries are flushed to the main index structure.",
+  "symptoms": [
+    "Slow GIN index creation or bulk inserts",
+    "High memory usage during concurrent GIN index writes",
+    "Increased WAL generation due to frequent pending list flushes",
+    "Index bloat from premature or excessive flushing"
+  ],
+  "dependencies": [
+    "maintenance_work_mem",
+    "work_mem",
+    "gin_fuzzy_search_limit"
+  ],
+  "constraints": {
+    "hard_rule": "value <= maintenance_work_mem * 0.5",
+    "min": "64",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Increase for large bulk GIN index builds to reduce flush frequency and improve throughput; decrease if memory pressure occurs or for OLTP workloads with many small GIN updates.",
+  "default_formula": "4096"
+}

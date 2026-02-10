@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "track_counts",
+  "category": "Statistics",
+  "context": "superuser",
+  "unit": null,
+  "description": "Enables collection of table and index access statistics, including row counts, tuple insert/update/delete activity, and I/O timing.",
+  "symptoms": [
+    "autovacuum inefficiency",
+    "stale query plans due to outdated statistics",
+    "increased bloat from missed vacuum opportunities",
+    "poor cost-based planner decisions"
+  ],
+  "dependencies": [
+    "autovacuum",
+    "stats_temp_directory",
+    "track_io_timing"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Leave enabled unless auditing or monitoring is strictly prohibited; disabling requires superuser privileges and harms autovacuum and query planning accuracy.",
+  "default_formula": null
+}

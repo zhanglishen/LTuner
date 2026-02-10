@@ -1,1 +1,26 @@
-{"min_value": "4 MB", "max_value": "62 GB", "suggested_values": ["4 MB"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "work_mem",
+  "category": "Resource",
+  "context": "user",
+  "unit": "kB",
+  "description": "Maximum memory available for each internal sort operation and hash table before spilling to temporary disk files.",
+  "symptoms": [
+    "High IO wait due to excessive temp file usage",
+    "OOM error from over-allocation across concurrent operations",
+    "Slow sorting or hashing on large datasets",
+    "Excessive temporary file creation and disk I/O",
+    "Memory pressure leading to OS-level swapping"
+  ],
+  "dependencies": [
+    "max_connections",
+    "maintenance_work_mem",
+    "shared_buffers"
+  ],
+  "constraints": {
+    "hard_rule": "value * max_connections * 4 < RAM * 0.75",
+    "min": "64",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set per-workspace memory based on query complexity and concurrency: lower (1–4 MB) for OLTP with high connection count; higher (64–1024 MB) for OLAP with few concurrent heavy queries. Monitor temp file generation and memory usage to validate.",
+  "default_formula": "RAM / (max_connections * 4)"
+}

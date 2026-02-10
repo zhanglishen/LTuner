@@ -1,1 +1,21 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on", "off"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "track_commit_timestamp",
+  "category": "Replication",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Enables collection and storage of the commit timestamp for each transaction.",
+  "symptoms": [
+    "Inability to perform logical replication with time-based filtering",
+    "Missing commit time metadata for conflict resolution in multi-master setups",
+    "Failure to use pg_xact_commit_timestamp() or pg_last_committed_xact() functions"
+  ],
+  "dependencies": [
+    "wal_level",
+    "max_replication_slots"
+  ],
+  "constraints": {
+    "hard_rule": "value == 'on' implies wal_level >= 'replica'"
+  },
+  "tuning_tips": "Enable only when required for logical replication, conflict detection, or auditing; requires a server restart and increases WAL size slightly.",
+  "default_formula": null
+}

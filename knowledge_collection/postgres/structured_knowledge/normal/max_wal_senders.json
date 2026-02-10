@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": ["11"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_wal_senders",
+  "category": "Replication",
+  "context": "postmaster",
+  "unit": "count",
+  "description": "Maximum number of concurrent WAL sender processes for streaming replication and base backups.",
+  "symptoms": [
+    "Standby servers fail to connect",
+    "Streaming replication stalls or disconnects abruptly",
+    "Base backup operations rejected",
+    "Connection refused errors during failover"
+  ],
+  "dependencies": [
+    "wal_level"
+  ],
+  "constraints": {
+    "hard_rule": "value >= number_of_standbys + number_of_concurrent_backups",
+    "min": "0",
+    "max": "262143"
+  },
+  "tuning_tips": "Set slightly higher than the peak number of standby servers and concurrent streaming base backups; increase only as needed since each sender consumes memory and backend resources.",
+  "default_formula": "max(10, number_of_standbys + number_of_concurrent_backups + 2)"
+}

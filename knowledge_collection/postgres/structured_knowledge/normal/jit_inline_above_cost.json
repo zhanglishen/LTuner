@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": ["500000"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "jit_inline_above_cost",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Sets the minimum estimated query execution cost threshold above which JIT compilation attempts to inline functions and operators.",
+  "symptoms": [
+    "Increased query planning time",
+    "Unnecessary CPU overhead during planning",
+    "No performance improvement for simple queries",
+    "JIT inlining disabled unexpectedly"
+  ],
+  "dependencies": [
+    "jit_above_cost",
+    "jit_enabled"
+  ],
+  "constraints": {
+    "hard_rule": "value >= jit_above_cost or value == -1",
+    "min": "-1",
+    "max": "1.79769e+308"
+  },
+  "tuning_tips": "Increase this value to reduce JIT inlining overhead on simpler queries; decrease it (but not below jit_above_cost) to enable inlining earlier for complex queries. Set to -1 to disable inlining entirely.",
+  "default_formula": "jit_above_cost * 10"
+}

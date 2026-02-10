@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["64 MB"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "logical_decoding_work_mem",
+  "category": "Resource",
+  "context": "user",
+  "unit": "kB",
+  "description": "Maximum memory per logical decoding session used for internal reorder buffers before spilling changes to disk.",
+  "symptoms": [
+    "High disk I/O from decoding spill files",
+    "Logical replication lag under high change volume",
+    "OOM error during peak logical decoding load",
+    "Slow logical decoding throughput"
+  ],
+  "dependencies": [
+    "max_logical_replication_workers",
+    "max_worker_processes",
+    "shared_buffers"
+  ],
+  "constraints": {
+    "hard_rule": "value <= RAM * 0.1",
+    "min": "64",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Increase this value to reduce disk spills and improve decoding throughput when memory is available; monitor 'pg_stat_replication' and decoding-related disk I/O to avoid over-allocation.",
+  "default_formula": "RAM * 0.02"
+}

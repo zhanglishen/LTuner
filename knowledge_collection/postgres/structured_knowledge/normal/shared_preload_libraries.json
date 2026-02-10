@@ -1,1 +1,22 @@
-{"min_value": null, "max_value": null, "suggested_values": ["pg_stat_statements", "auto_explain"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "shared_preload_libraries",
+  "category": "Shared Library Preloading",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Specifies a comma-separated list of shared library names to load into the PostgreSQL server at startup.",
+  "symptoms": [
+    "Extension functions unavailable at runtime",
+    "Missing statistics collection (e.g., no query execution stats)",
+    "Failed CREATE EXTENSION due to unloaded required libraries",
+    "Increased per-connection startup latency for extensions"
+  ],
+  "dependencies": [
+    "local_preload_libraries",
+    "session_preload_libraries"
+  ],
+  "constraints": {
+    "hard_rule": "value must contain only valid, installed library names without paths or version suffixes"
+  },
+  "tuning_tips": "Include only libraries required by extensions used across all sessions; avoid adding unused libraries as they increase memory footprint and postmaster startup time.",
+  "default_formula": null
+}

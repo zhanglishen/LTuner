@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["8 MB"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "temp_buffers",
+  "category": "Resource Usage / Memory",
+  "context": "user",
+  "unit": "8kB",
+  "description": "Sets the maximum number of temporary buffers allocated per database session for operations on temporary tables and sorts.",
+  "symptoms": [
+    "Slow temporary table operations",
+    "Excessive disk I/O during temp table usage",
+    "High memory usage per session",
+    "Query timeouts due to spilling to disk"
+  ],
+  "dependencies": [
+    "work_mem",
+    "shared_buffers",
+    "maintenance_work_mem"
+  ],
+  "constraints": {
+    "hard_rule": "value * 8 <= session_memory_limit",
+    "min": "100",
+    "max": "1073741823"
+  },
+  "tuning_tips": "Increase only for sessions expected to use large temporary tables; monitor per-session memory usage and avoid setting too high, as memory is not shared across sessions and each buffer consumes ~64 bytes overhead plus 8kB when used.",
+  "default_formula": "8 * 1024"
+}

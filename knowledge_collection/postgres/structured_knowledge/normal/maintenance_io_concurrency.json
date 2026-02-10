@@ -1,1 +1,25 @@
-{"min_value": "1", "max_value": "10", "suggested_values": ["10"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "maintenance_io_concurrency",
+  "category": "Resource Usage",
+  "context": "user",
+  "unit": null,
+  "description": "Controls the number of concurrent I/O operations allowed during maintenance tasks (e.g., VACUUM, CREATE INDEX) per backend.",
+  "symptoms": [
+    "Slow index creation",
+    "Prolonged VACUUM runtime",
+    "Underutilized storage bandwidth during maintenance",
+    "High I/O latency spikes during bulk maintenance"
+  ],
+  "dependencies": [
+    "effective_io_concurrency",
+    "maintenance_work_mem",
+    "max_parallel_maintenance_workers"
+  ],
+  "constraints": {
+    "hard_rule": "value <= 1000 && value >= 0",
+    "min": "0",
+    "max": "1000"
+  },
+  "tuning_tips": "Set to the number of physically independent storage devices (e.g., SSDs or RAID groups) available for parallel maintenance I/O; avoid exceeding hardware concurrency limits to prevent I/O saturation.",
+  "default_formula": "min(10, number_of_parallel_storage_devices)"
+}

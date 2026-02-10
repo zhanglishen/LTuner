@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": "884 GB", "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "log_rotation_size",
+  "category": "Reporting and Logging",
+  "context": "sighup",
+  "unit": "kB",
+  "description": "Maximum size of an individual log file before automatic rotation to a new file.",
+  "symptoms": [
+    "log directory disk exhaustion",
+    "unmanageable large log files",
+    "delayed log analysis due to oversized files",
+    "log retention policy violations"
+  ],
+  "dependencies": [
+    "logging_collector",
+    "log_filename",
+    "log_rotation_age"
+  ],
+  "constraints": {
+    "hard_rule": "value * number_of_concurrent_log_files < available_disk_space",
+    "min": "0",
+    "max": "2097151"
+  },
+  "tuning_tips": "Set based on expected log volume and disk capacity; increase for high-throughput systems with ample disk, decrease for constrained environments or fine-grained log retention. Monitor log growth rate to avoid rotation too frequently or too rarely.",
+  "default_formula": "10240"
+}

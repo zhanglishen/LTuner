@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "jit_optimize_above_cost",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Sets the minimum estimated query execution cost threshold above which JIT compilation applies optimization passes to generated code.",
+  "symptoms": [
+    "Excessive query planning time",
+    "No JIT optimization benefit despite high-cost queries",
+    "Suboptimal execution speed for complex queries",
+    "Wasted CPU cycles on unnecessary JIT optimization"
+  ],
+  "dependencies": [
+    "jit_enabled",
+    "jit_above_cost",
+    "jit_inline_above_cost"
+  ],
+  "constraints": {
+    "hard_rule": "value >= jit_above_cost and value <= jit_inline_above_cost",
+    "min": "-1",
+    "max": "1.79769e+308"
+  },
+  "tuning_tips": "Set slightly above jit_above_cost to enable optimization only for sufficiently expensive queries; avoid values exceeding jit_inline_above_cost as diminishing returns occur. Use -1 to disable entirely.",
+  "default_formula": "jit_above_cost * 2"
+}

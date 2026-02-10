@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": ["400 million"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "vacuum_multixact_failsafe_age",
+  "category": "WAL",
+  "context": "user",
+  "unit": null,
+  "description": "Multixact age threshold at which VACUUM triggers a failsafe emergency vacuum to prevent multixact ID wraparound outage.",
+  "symptoms": [
+    "Multixact wraparound outage",
+    "Database shutdown due to multixact exhaustion",
+    "Failed VACUUM operations under high multixact load",
+    "Unrecoverable transaction errors"
+  ],
+  "dependencies": [
+    "autovacuum_multixact_freeze_max_age",
+    "multixact_freeze_max_age"
+  ],
+  "constraints": {
+    "hard_rule": "value < autovacuum_multixact_freeze_max_age / 2",
+    "min": "0",
+    "max": "2100000000"
+  },
+  "tuning_tips": "Set to ~400 million (or less than half of autovacuum_multixact_freeze_max_age) to ensure timely failsafe vacuum before wraparound risk. Monitor pg_stat_database.datfrozenxid_age and pg_stat_database.datminmxid_age to validate timing.",
+  "default_formula": "autovacuum_multixact_freeze_max_age * 0.4"
+}

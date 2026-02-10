@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["2.00"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "geqo_selection_bias",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Controls selective pressure in the Genetic Query Optimizer (GEQO) population during query plan search.",
+  "symptoms": [
+    "Suboptimal query plans for complex joins",
+    "Excessive planning time for large join queries",
+    "Inconsistent plan selection across similar queries"
+  ],
+  "dependencies": [
+    "geqo",
+    "geqo_threshold",
+    "geqo_pool_size",
+    "geqo_generations"
+  ],
+  "constraints": {
+    "hard_rule": "1.5 <= value <= 2.0",
+    "min": "1.5",
+    "max": "2"
+  },
+  "tuning_tips": "Increase slightly (e.g., 1.7–2.0) to favor fitter individuals and converge faster; decrease toward 1.5 only if GEQO produces overly conservative or repetitive plans. Avoid values outside [1.5, 2.0] as they are unsupported.",
+  "default_formula": "2.0"
+}

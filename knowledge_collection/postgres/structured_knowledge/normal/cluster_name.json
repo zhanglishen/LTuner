@@ -1,1 +1,20 @@
-{"min_value": null, "max_value": "64 characters", "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "cluster_name",
+  "category": "Reporting and Logging",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Sets the name of the PostgreSQL cluster, displayed in process titles and used as the default application_name for standby connections.",
+  "symptoms": [
+    "Ambiguous process identification in ps/top output",
+    "Confusing log entries across multiple co-located clusters",
+    "Difficulty correlating standby connections to their source cluster"
+  ],
+  "dependencies": [
+    "application_name"
+  ],
+  "constraints": {
+    "hard_rule": "length(value) <= 64 && value matches /^[[:print:]]+$/"
+  },
+  "tuning_tips": "Set to a short, descriptive ASCII string (e.g., 'prod-us-east', 'staging-replica') that uniquely identifies the cluster; avoid spaces or special characters.",
+  "default_formula": null
+}

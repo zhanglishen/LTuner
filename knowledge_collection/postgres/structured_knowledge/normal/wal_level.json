@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": ["replica", "minimal", "logical"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "wal_level",
+  "category": "WAL",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Controls the amount of information written to the Write-Ahead Log, determining support for features like replication, archiving, and logical decoding.",
+  "symptoms": [
+    "Replication failure",
+    "Logical decoding not possible",
+    "WAL archiving disabled",
+    "Inability to promote standby server"
+  ],
+  "dependencies": [
+    "archive_mode",
+    "max_replication_slots",
+    "max_logical_replication_workers"
+  ],
+  "constraints": {
+    "hard_rule": "value in ['minimal', 'replica', 'logical']"
+  },
+  "tuning_tips": "Use 'replica' for physical replication and archiving; use 'logical' only if logical replication or logical decoding is required; avoid 'minimal' unless no replication or archiving is needed.",
+  "default_formula": "'replica'"
+}

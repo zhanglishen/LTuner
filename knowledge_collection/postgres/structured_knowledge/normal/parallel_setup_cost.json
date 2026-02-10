@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": ["1000"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "parallel_setup_cost",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Sets the planner's estimate of the cost to initiate parallel worker processes for a query.",
+  "symptoms": [
+    "Excessive parallel query usage for trivial queries",
+    "Increased CPU contention from unnecessary worker processes",
+    "Higher memory consumption due to over-provisioned parallel workers",
+    "Degraded response time from scheduling overhead"
+  ],
+  "dependencies": [
+    "max_parallel_workers_per_gather",
+    "parallel_tuple_cost",
+    "effective_cache_size",
+    "cpu_tuple_cost"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0",
+    "min": "0",
+    "max": "1.79769e+308"
+  },
+  "tuning_tips": "Increase this value to discourage parallelism for small or simple queries; decrease only if large analytical queries consistently avoid parallel plans despite available workers. Monitor plan choices via EXPLAIN before and after changes.",
+  "default_formula": "1000"
+}

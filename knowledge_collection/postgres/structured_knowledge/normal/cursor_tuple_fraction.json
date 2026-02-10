@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "cursor_tuple_fraction",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Controls the planner's estimate of the fraction of cursor rows that will be retrieved, influencing plan selection between fast-start (e.g., index scans) and overall-optimal (e.g., sequential scans) strategies.",
+  "symptoms": [
+    "Slow first-row response for cursors",
+    "Suboptimal plan choice for cursor queries",
+    "Excessive disk I/O due to sequential scan when index scan would be faster",
+    "Poor latency for interactive applications using DECLARE/ FETCH"
+  ],
+  "dependencies": [
+    "enable_indexscan",
+    "enable_seqscan",
+    "random_page_cost",
+    "effective_cache_size"
+  ],
+  "constraints": {
+    "hard_rule": "0 <= value <= 1",
+    "min": "0",
+    "max": "1"
+  },
+  "tuning_tips": "Increase toward 1.0 for cursors where most or all rows will be fetched (e.g., batch exports); decrease toward 0.01–0.05 for interactive cursors fetching only a few rows (e.g., paginated UIs). Observe EXPLAIN ANALYZE output for cursor plans before and after change.",
+  "default_formula": "0.1"
+}

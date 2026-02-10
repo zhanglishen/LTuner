@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["1000"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_files_per_process",
+  "category": "Resource Usage / Kernel Resources",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Sets the maximum number of simultaneously open files (file descriptors) allowed for each PostgreSQL server process.",
+  "symptoms": [
+    "Too many open files error",
+    "Connection failures under high concurrency",
+    "Process crashes due to file descriptor exhaustion",
+    "Inability to open relations or WAL files"
+  ],
+  "dependencies": [
+    "ulimit -n",
+    "fs.file-max",
+    "shared_buffers"
+  ],
+  "constraints": {
+    "hard_rule": "value <= system_ulimit_n",
+    "min": "64",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set this value slightly below the OS per-process file descriptor limit (ulimit -n); increase only if encountering 'Too many open files' errors and the OS limit allows it. Decrease if processes fail to start or exhibit instability due to resource contention.",
+  "default_formula": "min(1000, system_ulimit_n * 0.9)"
+}

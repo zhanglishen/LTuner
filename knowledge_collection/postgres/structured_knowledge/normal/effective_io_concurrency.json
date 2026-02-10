@@ -1,1 +1,25 @@
-{"min_value": "1", "max_value": "200", "suggested_values": ["100", "200"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "effective_io_concurrency",
+  "category": "Resource Usage",
+  "context": "user",
+  "unit": null,
+  "description": "Number of simultaneous I/O operations the disk subsystem can handle efficiently; influences parallelism in bitmap heap scans and asynchronous I/O behavior.",
+  "symptoms": [
+    "Slow bitmap heap scans",
+    "Underutilized storage bandwidth",
+    "Excessive I/O queue depth",
+    "Poor query performance on I/O-bound workloads"
+  ],
+  "dependencies": [
+    "random_page_cost",
+    "work_mem",
+    "maintenance_work_mem"
+  ],
+  "constraints": {
+    "hard_rule": "value <= 1000 && value >= 0",
+    "min": "0",
+    "max": "1000"
+  },
+  "tuning_tips": "Set based on storage type: 1–10 for HDDs, 100–200 for SSDs, and higher (up to 1000) for NVMe or high-end SAN with async I/O support; validate using I/O profiling tools and workload benchmarks.",
+  "default_formula": "SSD ? 150 : (HDD ? 4 : 1)"
+}

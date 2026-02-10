@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": ["64"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_pred_locks_per_transaction",
+  "category": "Lock Management",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Sets the maximum number of predicate locks that can be held by a single transaction.",
+  "symptoms": [
+    "Predicate lock table overflow",
+    "ERROR: out of shared memory",
+    "Failed serializable transactions",
+    "High shared memory pressure"
+  ],
+  "dependencies": [
+    "max_connections",
+    "max_prepared_transactions"
+  ],
+  "constraints": {
+    "hard_rule": "value * (max_connections + max_prepared_transactions) < shared_buffers * 0.1",
+    "min": "10",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Increase only if encountering 'out of shared memory' during serializable transactions; monitor predicate lock usage via pg_stat_database.conflicts and pg_locks; avoid over-provisioning as each lock consumes ~10 bytes of shared memory.",
+  "default_formula": "64"
+}

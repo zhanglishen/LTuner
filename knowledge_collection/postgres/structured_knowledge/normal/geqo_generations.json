@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "geqo_generations",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Number of iterations performed by the Genetic Query Optimizer (GEQO) algorithm when planning complex joins.",
+  "symptoms": [
+    "Suboptimal query plans for large JOINs",
+    "Excessive planning time for complex queries",
+    "Inconsistent plan selection across similar queries"
+  ],
+  "dependencies": [
+    "geqo_pool_size",
+    "geqo_threshold",
+    "join_collapse_limit"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0",
+    "min": "0",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set to 0 to use the default (derived from geqo_pool_size); increase only if GEQO consistently produces poor plans for complex queries, but avoid excessive values as they increase planning overhead.",
+  "default_formula": "geqo_pool_size * 2"
+}

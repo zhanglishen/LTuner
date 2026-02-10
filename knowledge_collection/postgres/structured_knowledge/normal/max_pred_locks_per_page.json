@@ -1,1 +1,25 @@
-{"min_value": "2", "max_value": null, "suggested_values": ["2"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_pred_locks_per_page",
+  "category": "Lock Management",
+  "context": "sighup",
+  "unit": null,
+  "description": "Sets the maximum number of predicate-locked tuples per page before upgrading to a page-level lock.",
+  "symptoms": [
+    "Excessive page-level locking under high contention",
+    "Reduced concurrency in predicate-lock-heavy workloads",
+    "Increased shared memory usage",
+    "Lock escalation overhead"
+  ],
+  "dependencies": [
+    "max_pred_locks_per_transaction",
+    "shared_buffers",
+    "lock_timeout"
+  ],
+  "constraints": {
+    "hard_rule": "value <= max_pred_locks_per_transaction",
+    "min": "0",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Increase only for high-contention predicate-lock workloads (e.g., SERIALIZABLE isolation with fine-grained conflicts); monitor shared memory usage and lock escalation frequency.",
+  "default_formula": null
+}

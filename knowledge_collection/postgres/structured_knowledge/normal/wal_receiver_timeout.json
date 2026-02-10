@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": "60 s", "suggested_values": ["60 s"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "wal_receiver_timeout",
+  "category": "Replication",
+  "context": "sighup",
+  "unit": "ms",
+  "description": "Maximum time the WAL receiver waits for data from the primary server before disconnecting.",
+  "symptoms": [
+    "False positive primary failure detection",
+    "Unnecessary replication restarts",
+    "Delayed failover during actual outages",
+    "Stale standby state due to silent network hangs"
+  ],
+  "dependencies": [
+    "wal_sender_timeout",
+    "tcp_keepalives_idle",
+    "tcp_keepalives_interval"
+  ],
+  "constraints": {
+    "hard_rule": "value > 0",
+    "min": "0",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Increase this value in high-latency or unstable networks to avoid spurious disconnections; decrease only if rapid detection of primary failure is critical and network reliability is high.",
+  "default_formula": "60000"
+}

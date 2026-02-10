@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "min_wal_size",
+  "category": "WAL",
+  "context": "sighup",
+  "unit": "MB",
+  "description": "Sets the minimum size to which the WAL directory is shrunk during checkpoint cleanup; defines the lower bound for WAL file recycling.",
+  "symptoms": [
+    "Excessive checkpoint frequency",
+    "Write stalls during high WAL generation",
+    "Unnecessary WAL file churn",
+    "Poor write throughput under burst loads"
+  ],
+  "dependencies": [
+    "max_wal_size",
+    "checkpoint_timeout",
+    "checkpoint_completion_target"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 2 and value <= max_wal_size",
+    "min": "2",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Increase min_wal_size to absorb write bursts (e.g., batch jobs) and reduce checkpoint pressure; set it between 1x–4x typical WAL generation rate per checkpoint interval.",
+  "default_formula": "RAM * 0.01"
+}

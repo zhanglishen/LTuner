@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "wal_compression",
+  "category": "WAL",
+  "context": "sighup",
+  "unit": null,
+  "description": "Enables compression of full-page images in WAL records to reduce WAL volume.",
+  "symptoms": [
+    "Increased CPU usage",
+    "Slower WAL replay during recovery",
+    "Higher latency for WAL-intensive workloads",
+    "Potential WAL bloat when disabled under high full-page-write load"
+  ],
+  "dependencies": [
+    "wal_level",
+    "checkpoint_timeout",
+    "max_wal_size"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Enable only if WAL volume is a bottleneck and CPU headroom is available; monitor CPU usage and recovery time after enabling.",
+  "default_formula": null
+}

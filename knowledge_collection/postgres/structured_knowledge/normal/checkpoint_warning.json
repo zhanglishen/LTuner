@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "checkpoint_warning",
+  "category": "WAL",
+  "context": "sighup",
+  "unit": "s",
+  "description": "Logs a warning if checkpoints triggered by WAL segment file exhaustion occur more frequently than this interval.",
+  "symptoms": [
+    "Frequent checkpoint warnings in logs",
+    "Excessive WAL recycling",
+    "Suboptimal checkpoint scheduling",
+    "Missed opportunity to tune max_wal_size"
+  ],
+  "dependencies": [
+    "max_wal_size",
+    "checkpoint_timeout",
+    "wal_segment_size"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0",
+    "min": "0",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set to a value slightly less than checkpoint_timeout to detect premature checkpoints caused by WAL segment exhaustion; increase max_wal_size if warnings persist. Zero disables the warning.",
+  "default_formula": "checkpoint_timeout * 0.75"
+}

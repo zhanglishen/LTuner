@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "enable_hashjoin",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Controls whether the query planner considers hash join execution plans.",
+  "symptoms": [
+    "Suboptimal join performance",
+    "Excessive disk spilling during joins",
+    "Longer query planning time",
+    "Higher memory usage for large joins"
+  ],
+  "dependencies": [
+    "enable_mergejoin",
+    "enable_nestloop",
+    "work_mem"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Disable only if hash joins consistently produce poor performance (e.g., due to skewed data or insufficient work_mem); otherwise, leave enabled to allow the planner full join strategy flexibility.",
+  "default_formula": null
+}

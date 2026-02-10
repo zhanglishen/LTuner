@@ -1,1 +1,22 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on", "off"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "quote_all_identifiers",
+  "category": "Version and Platform Compatibility",
+  "context": "user",
+  "unit": null,
+  "description": "When enabled, forces PostgreSQL to quote all identifiers (e.g., table names, column names) in generated SQL output, including EXPLAIN plans and catalog functions like pg_get_viewdef.",
+  "symptoms": [
+    "SQL output incompatible with older PostgreSQL versions",
+    "Identifier name conflicts due to case sensitivity or special characters",
+    "pg_dump or pg_dumpall output fails to restore on systems requiring strict quoting",
+    "Unexpected parsing errors when reusing generated SQL in heterogeneous environments"
+  ],
+  "dependencies": [
+    "standard_conforming_strings",
+    "client_encoding"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Enable 'on' only when interoperability with external tools (e.g., pg_dump --quote-all-identifiers) or cross-version compatibility requires consistent identifier quoting; disable ('off') for default, more readable SQL output.",
+  "default_formula": null
+}

@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": ["5"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "geqo_effort",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Controls the effort level of the Genetic Query Optimizer (GEQO) to balance planning time versus query plan quality.",
+  "symptoms": [
+    "Excessive query planning time",
+    "Suboptimal join order selection",
+    "Poor execution performance on complex joins",
+    "Increased CPU usage during planning"
+  ],
+  "dependencies": [
+    "geqo_threshold",
+    "geqo_pool_size",
+    "geqo_generations",
+    "geqo_selection_bias"
+  ],
+  "constraints": {
+    "hard_rule": "1 <= value <= 10",
+    "min": "1",
+    "max": "10"
+  },
+  "tuning_tips": "Increase geqo_effort for complex queries with many joins to improve plan quality; reduce it when planning time dominates overall query latency. Values above 7–8 yield diminishing returns and significantly increase planning overhead.",
+  "default_formula": "5"
+}

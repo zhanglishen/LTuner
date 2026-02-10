@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "vacuum_freeze_min_age",
+  "category": "WAL",
+  "context": "user",
+  "unit": "count",
+  "description": "Minimum transaction age (in XID count) at which VACUUM freezes a row version to prevent transaction ID wraparound.",
+  "symptoms": [
+    "Transaction ID wraparound risk",
+    "Unplanned aggressive autovacuum storms",
+    "Bloat due to unfrozen rows",
+    "Query failures from frozen XID exhaustion"
+  ],
+  "dependencies": [
+    "autovacuum_freeze_max_age",
+    "vacuum_freeze_table_age"
+  ],
+  "constraints": {
+    "hard_rule": "value <= autovacuum_freeze_max_age / 2",
+    "min": "0",
+    "max": "1000000000"
+  },
+  "tuning_tips": "Set lower than autovacuum_freeze_max_age (typically half or less) to proactively freeze rows before wraparound danger; avoid setting too low to prevent excessive freezing overhead during routine VACUUM.",
+  "default_formula": "autovacuum_freeze_max_age * 0.5"
+}

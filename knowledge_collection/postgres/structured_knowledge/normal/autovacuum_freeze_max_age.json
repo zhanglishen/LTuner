@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": "200,000,000", "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "autovacuum_freeze_max_age",
+  "category": "Autovacuum",
+  "context": "postmaster",
+  "unit": "transactions",
+  "description": "Maximum transaction age (in XIDs) before autovacuum is forced on a table to prevent transaction ID wraparound.",
+  "symptoms": [
+    "Transaction ID wraparound failure",
+    "Database shutdown due to XID exhaustion",
+    "Unplanned autovacuum storms",
+    "Bloat in system catalogs",
+    "Query failures with 'database must be vacuumed within N transactions'"
+  ],
+  "dependencies": [
+    "vacuum_freeze_min_age",
+    "vacuum_freeze_table_age",
+    "autovacuum_vacuum_scale_factor"
+  ],
+  "constraints": {
+    "hard_rule": "value <= 2000000000 and value >= 100000",
+    "min": "100000",
+    "max": "2000000000"
+  },
+  "tuning_tips": "Set to a value significantly lower than the 2-billion-XID wraparound limit; reduce for tables with high transaction churn to avoid sudden wraparound emergencies, but avoid setting too low to prevent excessive autovacuum overhead.",
+  "default_formula": "min(200000000, max(1000000, 0.1 * expected_transactions_per_table_before_wraparound))"
+}

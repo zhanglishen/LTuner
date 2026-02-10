@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "enable_bitmapscan",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Controls whether the query planner considers bitmap index scan plans during query plan generation.",
+  "symptoms": [
+    "Suboptimal query plans for selective index queries",
+    "Increased sequential scan usage on large tables",
+    "Higher I/O and slower query execution for multi-index conditions",
+    "Missed opportunities for efficient OR/IN clause evaluation"
+  ],
+  "dependencies": [
+    "enable_indexscan",
+    "enable_seqscan",
+    "enable_tidscan",
+    "effective_cache_size"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Leave enabled unless profiling shows bitmap scans consistently underperforming index or sequential scans for your workload; disable only selectively after plan analysis with EXPLAIN.",
+  "default_formula": null
+}

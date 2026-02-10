@@ -1,1 +1,22 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "track_io_timing",
+  "category": "Statistics",
+  "context": "superuser",
+  "unit": null,
+  "description": "Enables collection of timing statistics for database I/O operations.",
+  "symptoms": [
+    "Missing I/O latency metrics in pg_stat_database",
+    "Inability to analyze I/O timing via EXPLAIN (BUFFERS)",
+    "No I/O timing data available in pg_stat_statements",
+    "Incomplete performance diagnostics for storage-bound workloads"
+  ],
+  "dependencies": [
+    "track_activities",
+    "track_counts"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Enable only when diagnosing I/O performance issues, as it incurs measurable OS time-query overhead; disable after analysis to reduce CPU usage.",
+  "default_formula": null
+}

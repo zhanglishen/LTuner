@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "log_temp_files",
+  "category": "Reporting and Logging",
+  "context": "superuser",
+  "unit": "kB",
+  "description": "Logs temporary file names and sizes when files exceed the specified size in kilobytes; logs occur at file deletion.",
+  "symptoms": [
+    "Excessive temp file usage undetected",
+    "Poor query performance due to spilling to disk",
+    "Inability to diagnose low work_mem issues",
+    "Unexplained disk I/O spikes during queries"
+  ],
+  "dependencies": [
+    "work_mem",
+    "maintenance_work_mem"
+  ],
+  "constraints": {
+    "hard_rule": "value >= -1",
+    "min": "-1",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set to a small positive value (e.g., 1024 for 1MB) to log large temp files during investigation; set to -1 to disable. Monitor logs to identify queries spilling to disk, then tune work_mem accordingly.",
+  "default_formula": null
+}

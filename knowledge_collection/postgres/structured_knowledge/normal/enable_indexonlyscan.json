@@ -1,1 +1,22 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on", "off"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "enable_indexonlyscan",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Enables or disables the query planner's use of index-only scan plan types, which retrieve data solely from indexes without accessing heap pages.",
+  "symptoms": [
+    "Unnecessarily slow queries on covered index scans",
+    "Increased I/O due to redundant heap fetches",
+    "Higher CPU usage from unnecessary tuple visibility checks"
+  ],
+  "dependencies": [
+    "enable_indexscan",
+    "maintenance_work_mem",
+    "default_statistics_target"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Leave enabled unless diagnosing specific planner regressions; disable only temporarily for comparison during query plan analysis.",
+  "default_formula": null
+}

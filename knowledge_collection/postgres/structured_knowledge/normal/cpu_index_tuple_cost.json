@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["0.004", "0.005"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "cpu_index_tuple_cost",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Sets the planner's estimate of the CPU cost to process each index tuple during an index scan.",
+  "symptoms": [
+    "Suboptimal query plans choosing sequential scans over index scans",
+    "Poor index usage despite selective predicates",
+    "Increased query execution time for indexed lookups",
+    "Inconsistent performance between similar queries"
+  ],
+  "dependencies": [
+    "cpu_tuple_cost",
+    "random_page_cost",
+    "seq_page_cost"
+  ],
+  "constraints": {
+    "hard_rule": "value < cpu_tuple_cost",
+    "min": "0",
+    "max": "1.79769e+308"
+  },
+  "tuning_tips": "Lower this value if index scans are underutilized despite good selectivity; raise slightly only if index scans consistently perform worse than sequential scans on your hardware. Always keep it less than cpu_tuple_cost.",
+  "default_formula": null
+}

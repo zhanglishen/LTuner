@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": ["0.1"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "parallel_tuple_cost",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Sets the planner's estimate of the cost of passing each tuple from a parallel worker to the leader backend during parallel query execution.",
+  "symptoms": [
+    "Underutilized CPU cores",
+    "Suboptimal parallel plan selection",
+    "Sequential scan instead of parallel scan",
+    "Increased query latency for large scans"
+  ],
+  "dependencies": [
+    "parallel_setup_cost",
+    "parallel_leader_participation",
+    "max_parallel_workers_per_gather",
+    "cpu_tuple_cost"
+  ],
+  "constraints": {
+    "hard_rule": null,
+    "min": "0",
+    "max": "1.79769e+308"
+  },
+  "tuning_tips": "Decrease to encourage more parallelism (e.g., 0.01–0.05) on fast interconnects or low-latency systems; increase (e.g., 0.2–0.5) to discourage parallelism when tuple transfer overhead is high or memory bandwidth is constrained.",
+  "default_formula": "0.1"
+}

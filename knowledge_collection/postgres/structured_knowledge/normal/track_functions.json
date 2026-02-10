@@ -1,1 +1,22 @@
-{"min_value": null, "max_value": null, "suggested_values": ["pl", "all", "none"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "track_functions",
+  "category": "Statistics",
+  "context": "superuser",
+  "unit": null,
+  "description": "Enables collection of function-level execution statistics, including call counts and time spent per function.",
+  "symptoms": [
+    "Missing function-level performance diagnostics",
+    "Inability to identify expensive user-defined functions",
+    "Misattribution of query cost due to untracked function overhead"
+  ],
+  "dependencies": [
+    "track_activities",
+    "track_counts",
+    "pg_stat_statements.track"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Enable 'pl' for basic procedural-language function profiling; use 'all' only when diagnosing complex function-heavy workloads, as it incurs measurable overhead. Disable ('none') in production unless actively troubleshooting function performance.",
+  "default_formula": null
+}

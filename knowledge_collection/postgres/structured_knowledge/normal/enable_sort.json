@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on", "off"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "enable_sort",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Controls whether the query planner considers explicit sort steps (e.g., for merge joins or ORDER BY) during plan generation.",
+  "symptoms": [
+    "Incorrect join strategy selection",
+    "Suboptimal query plans with unnecessary hash joins",
+    "Poor performance on ORDER BY or merge-join-heavy workloads",
+    "Unexpected plan regressions after configuration changes"
+  ],
+  "dependencies": [
+    "enable_mergejoin",
+    "enable_hashjoin",
+    "enable_material"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Leave enabled ('on') unless diagnosing a specific planner misestimation; disabling may force less efficient alternatives and rarely improves performance. Only disable temporarily for plan comparison.",
+  "default_formula": null
+}

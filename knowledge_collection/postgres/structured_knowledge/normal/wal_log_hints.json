@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "wal_log_hints",
+  "category": "WAL",
+  "context": "postmaster",
+  "unit": null,
+  "description": "When enabled, writes full page images to WAL on the first modification of a page after a checkpoint, enabling physical replication and backup consistency features.",
+  "symptoms": [
+    "physical replication lag or failure",
+    "inconsistent base backups",
+    "recovery failures after crash",
+    "checksum-related WAL incompatibility errors"
+  ],
+  "dependencies": [
+    "data_checksums",
+    "wal_level",
+    "archive_mode"
+  ],
+  "constraints": {
+    "hard_rule": "value == false if data_checksums == true"
+  },
+  "tuning_tips": "Enable only when using physical replication, pg_basebackup, or PITR; disable if data_checksums is enabled or WAL volume must be minimized.",
+  "default_formula": null
+}

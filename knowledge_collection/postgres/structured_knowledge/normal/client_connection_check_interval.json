@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "client_connection_check_interval",
+  "category": "Connections and Authentication",
+  "context": "user",
+  "unit": "ms",
+  "description": "Sets the time interval between checks for client disconnection while a query is running.",
+  "symptoms": [
+    "Stale backend processes consuming resources",
+    "Delayed detection of dead clients during long-running queries",
+    "Unnecessary CPU overhead from overly frequent checks"
+  ],
+  "dependencies": [
+    "tcp_keepalives_idle",
+    "tcp_keepalives_interval",
+    "tcp_keepalives_count"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0",
+    "min": "0",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set to a low value (e.g., 100–1000 ms) if fast client failure detection is critical; increase (or set to 0 to disable) to reduce CPU overhead in high-throughput, low-latency environments with reliable networks.",
+  "default_formula": "0"
+}

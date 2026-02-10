@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["8 GB", "16 GB", "32 GB"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "maintenance_work_mem",
+  "category": "Resource",
+  "context": "user",
+  "unit": "kB",
+  "description": "Sets the maximum memory available for maintenance operations such as VACUUM, CREATE INDEX, and ALTER TABLE ADD FOREIGN KEY.",
+  "symptoms": [
+    "slow index creation",
+    "long-running autovacuum stalls",
+    "high memory pressure during maintenance tasks",
+    "excessive disk I/O in VACUUM operations"
+  ],
+  "dependencies": [
+    "autovacuum_max_workers",
+    "work_mem",
+    "shared_buffers"
+  ],
+  "constraints": {
+    "hard_rule": "value <= (RAM * 0.25) / autovacuum_max_workers",
+    "min": "1024",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Increase for large databases or frequent maintenance workloads, but cap per-worker memory to avoid overwhelming system RAM; monitor actual usage via pg_stat_progress_vacuum and memory pressure during peak autovacuum activity.",
+  "default_formula": "RAM * 0.01"
+}

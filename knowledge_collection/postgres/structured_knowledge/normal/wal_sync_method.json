@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": ["open_datasync", "fdatasync", "fsync", "fsync_writethrough", "open_sync"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "wal_sync_method",
+  "category": "WAL",
+  "context": "sighup",
+  "unit": null,
+  "description": "Selects the system call used to force WAL writes to persistent storage, affecting durability guarantees and I/O performance.",
+  "symptoms": [
+    "Data loss after crash",
+    "High WAL write latency",
+    "Reduced transaction throughput",
+    "Inconsistent behavior across OS platforms"
+  ],
+  "dependencies": [
+    "synchronous_commit",
+    "wal_level",
+    "fsync"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Prefer 'fdatasync' on Linux for best balance of safety and performance; use 'fsync' only if filesystem or storage lacks fdatasync support. Avoid 'open_sync' and 'open_datasync' unless benchmarking confirms benefit and hardware guarantees atomic writes.",
+  "default_formula": null
+}

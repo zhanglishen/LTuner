@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": ["20"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "vacuum_cost_page_dirty",
+  "category": "Resource Usage",
+  "context": "user",
+  "unit": null,
+  "description": "Cost assigned when VACUUM dirties a previously clean page, reflecting I/O overhead of flushing the modified page to disk.",
+  "symptoms": [
+    "Excessive I/O during vacuum operations",
+    "Vacuum taking too long to complete",
+    "Unpredictable vacuum runtime under mixed workloads",
+    "Increased contention with foreground queries during vacuum"
+  ],
+  "dependencies": [
+    "vacuum_cost_limit",
+    "vacuum_cost_page_hit",
+    "vacuum_cost_page_miss",
+    "vacuum_cost_delay"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0 && value <= 10000",
+    "min": "0",
+    "max": "10000"
+  },
+  "tuning_tips": "Increase this value (e.g., 40–100) to slow down vacuum when dirty-page I/O is expensive or competing with critical queries; decrease (e.g., 5–20) to allow faster vacuum if storage is fast and vacuum lag is problematic.",
+  "default_formula": "20"
+}

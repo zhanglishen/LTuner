@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "log_connections",
+  "category": "Reporting and Logging",
+  "context": "user",
+  "unit": null,
+  "description": "Enables logging of each successful client connection to the PostgreSQL server.",
+  "symptoms": [
+    "Missing audit trail for connection attempts",
+    "Inability to detect brute-force or unauthorized access patterns",
+    "Difficulty diagnosing connection spikes or client behavior"
+  ],
+  "dependencies": [
+    "log_disconnections",
+    "log_hostname",
+    "log_line_prefix",
+    "logging_collector"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Enable only in environments requiring connection auditing; disable in high-throughput production systems to avoid log bloat and I/O overhead. Pair with log_disconnections for full session visibility.",
+  "default_formula": null
+}

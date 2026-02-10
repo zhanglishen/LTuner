@@ -1,1 +1,24 @@
-{"min_value": "0", "max_value": "8", "suggested_values": ["8"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_parallel_maintenance_workers",
+  "category": "Resource Usage",
+  "context": "user",
+  "unit": null,
+  "description": "Sets the maximum number of parallel background worker processes that a single maintenance command (e.g., CREATE INDEX, VACUUM) may use.",
+  "symptoms": [
+    "Slow index creation",
+    "Prolonged vacuum runtime",
+    "Underutilized CPU during maintenance",
+    "Maintenance operations not scaling with hardware"
+  ],
+  "dependencies": [
+    "max_worker_processes",
+    "maintenance_work_mem"
+  ],
+  "constraints": {
+    "hard_rule": "value <= max_worker_processes",
+    "min": "0",
+    "max": "1024"
+  },
+  "tuning_tips": "Increase this value to match available CPU cores and I/O capacity, but ensure it does not exceed max_worker_processes; start with min(4, number_of_cpus) and adjust based on observed throughput and resource contention.",
+  "default_formula": "min(4, number_of_cpus)"
+}

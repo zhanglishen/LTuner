@@ -1,1 +1,22 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "track_activity_query_size",
+  "category": "Statistics",
+  "context": "postmaster",
+  "unit": "B",
+  "description": "Sets the maximum number of bytes reserved per session to store the current query text in pg_stat_activity.query.",
+  "symptoms": [
+    "Truncated query text in pg_stat_activity",
+    "Inability to diagnose long or complex queries",
+    "Misattribution of performance issues due to incomplete query visibility"
+  ],
+  "dependencies": [
+    "track_activities"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 100 and value <= 1048576",
+    "min": "100",
+    "max": "1048576"
+  },
+  "tuning_tips": "Increase only if you need full visibility into long dynamic or generated queries; prefer minimal sufficient size to avoid unnecessary memory overhead per connection.",
+  "default_formula": "1024"
+}

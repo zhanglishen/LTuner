@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "cpu_tuple_cost",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Sets the planner's estimated cost of processing each tuple (row) during query execution.",
+  "symptoms": [
+    "Suboptimal query plans",
+    "Excessive sequential scans",
+    "Poor join strategy selection",
+    "Unexpected index usage or omission"
+  ],
+  "dependencies": [
+    "cpu_operator_cost",
+    "cpu_index_tuple_cost",
+    "random_page_cost",
+    "seq_page_cost"
+  ],
+  "constraints": {
+    "hard_rule": null,
+    "min": "0",
+    "max": "1.79769e+308"
+  },
+  "tuning_tips": "Increase cpu_tuple_cost to favor plans with fewer rows processed (e.g., index scans over seq scans); decrease to favor CPU-intensive but lower-I/O plans. Tune in concert with other cost constants for consistent planner behavior.",
+  "default_formula": null
+}

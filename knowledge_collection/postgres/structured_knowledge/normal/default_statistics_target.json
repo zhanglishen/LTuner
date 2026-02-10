@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["200"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "default_statistics_target",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Sets the default target number of histogram bins and most-common-values entries collected by ANALYZE for table columns without column-specific statistics targets.",
+  "symptoms": [
+    "Poor query plan selection",
+    "Suboptimal join order or join method",
+    "Unexpected sequential scans instead of index scans",
+    "Long ANALYZE runtime"
+  ],
+  "dependencies": [
+    "analyze_threshold",
+    "autovacuum_analyze_scale_factor",
+    "autovacuum_analyze_threshold"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 1 && value <= 10000",
+    "min": "1",
+    "max": "10000"
+  },
+  "tuning_tips": "Increase for large tables with skewed data distributions to improve planner accuracy; reduce if ANALYZE time is excessive and plans are already acceptable. Test changes with EXPLAIN and monitor plan stability.",
+  "default_formula": "100 * (table_size_in_GB > 10 ? 2 : 1)"
+}

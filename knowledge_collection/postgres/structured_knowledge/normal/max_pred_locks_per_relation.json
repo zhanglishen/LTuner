@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_pred_locks_per_relation",
+  "category": "Lock Management",
+  "context": "sighup",
+  "unit": null,
+  "description": "Sets the maximum number of predicate-locked pages and tuples per relation before promoting to a relation-level lock.",
+  "symptoms": [
+    "Excessive relation-level locks",
+    "Unintended lock escalation under high concurrency",
+    "High shared memory usage from fine-grained locks",
+    "Lock contention due to premature promotion"
+  ],
+  "dependencies": [
+    "max_pred_locks_per_transaction",
+    "shared_buffers"
+  ],
+  "constraints": {
+    "hard_rule": "value >= -2147483648 && value <= 2147483647",
+    "min": "-2147483648",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Use negative values (e.g., -2) to derive per-relation limits from max_pred_locks_per_transaction; increase positive values only when encountering frequent lock promotions and sufficient shared memory is available.",
+  "default_formula": "-2"
+}

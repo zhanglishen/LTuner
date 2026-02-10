@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["150000000", "150,000,000"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "vacuum_multixact_freeze_table_age",
+  "category": "WAL",
+  "context": "user",
+  "unit": null,
+  "description": "Multixact age threshold at which VACUUM scans the entire table to freeze multixact IDs and prevent wraparound.",
+  "symptoms": [
+    "multixact wraparound failure",
+    "uncontrolled table bloat",
+    "unexpected full-table VACUUMs causing I/O spikes",
+    "replication lag due to long-running vacuum operations"
+  ],
+  "dependencies": [
+    "autovacuum_multixact_freeze_max_age",
+    "vacuum_freeze_table_age",
+    "autovacuum_vacuum_scale_factor"
+  ],
+  "constraints": {
+    "hard_rule": "value <= autovacuum_multixact_freeze_max_age * 0.95",
+    "min": "0",
+    "max": "2000000000"
+  },
+  "tuning_tips": "Set lower than autovacuum_multixact_freeze_max_age (typically 95% of it) to trigger proactive freezing before wraparound risk; reduce further for tables with high multixact churn, but avoid excessive full-table scans.",
+  "default_formula": "autovacuum_multixact_freeze_max_age * 0.95"
+}

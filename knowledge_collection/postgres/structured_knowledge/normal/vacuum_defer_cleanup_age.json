@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "vacuum_defer_cleanup_age",
+  "category": "Replication",
+  "context": "sighup",
+  "unit": "count",
+  "description": "Number of transactions by which VACUUM and HOT cleanup of dead row versions is deferred to allow standby queries more time to complete.",
+  "symptoms": [
+    "standby query cancellation due to missing tuples",
+    "replication lag spikes during heavy vacuum activity",
+    "increased bloat on standby servers",
+    "replay conflicts on hot standbys"
+  ],
+  "dependencies": [
+    "hot_standby",
+    "max_standby_archive_delay",
+    "max_standby_streaming_delay"
+  ],
+  "constraints": {
+    "hard_rule": "value <= 1000000",
+    "min": "0",
+    "max": "1000000"
+  },
+  "tuning_tips": "Increase only if standby queries are frequently canceled due to tuple visibility conflicts; monitor replication lag and disk usage, as higher values increase WAL retention and table bloat on the primary.",
+  "default_formula": "0"
+}

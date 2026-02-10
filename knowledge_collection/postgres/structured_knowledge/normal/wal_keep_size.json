@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "wal_keep_size",
+  "category": "Replication",
+  "context": "sighup",
+  "unit": "MB",
+  "description": "Minimum size of WAL files retained in pg_wal to support streaming replication to standby servers.",
+  "symptoms": [
+    "Standby replication lag or disconnect",
+    "Replication failure due to missing WAL segments",
+    "Need for repeated base backups",
+    "Increased network traffic from WAL re-fetching"
+  ],
+  "dependencies": [
+    "max_wal_size",
+    "wal_keep_segments",
+    "archive_mode",
+    "primary_slot_name"
+  ],
+  "constraints": {
+    "hard_rule": "value <= max_wal_size * 2",
+    "min": "0",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set based on peak WAL generation rate and maximum expected standby downtime; monitor pg_stat_replication and pg_wal_lsn_diff to avoid gaps.",
+  "default_formula": "WAL_generation_rate_MB_per_hour * (max_standby_downtime_hours / 3600)"
+}

@@ -1,1 +1,25 @@
-{"min_value": "31 GB", "max_value": "43.4 GB", "suggested_values": ["31 GB", "43.4 GB"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "effective_cache_size",
+  "category": "Planner",
+  "context": "user",
+  "unit": "8kB",
+  "description": "Estimate of total disk cache available for PostgreSQL data files, including OS kernel cache and PostgreSQL shared buffers; used by the query planner to choose between index and sequential scans.",
+  "symptoms": [
+    "Suboptimal query plans (e.g., unnecessary seq scans)",
+    "Poor index usage despite selective predicates",
+    "Increased I/O during large queries",
+    "Higher-than-expected query latency for cached workloads"
+  ],
+  "dependencies": [
+    "shared_buffers",
+    "work_mem",
+    "max_connections"
+  ],
+  "constraints": {
+    "hard_rule": "value <= (RAM * 0.7) / 8192",
+    "min": "1",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set to 50–70% of total RAM on dedicated PostgreSQL servers; on shared servers, subtract estimated memory used by shared_buffers, work_mem, and other processes before allocating. Never set higher than actual combined cache capacity.",
+  "default_formula": "RAM * 0.5 / 8192"
+}

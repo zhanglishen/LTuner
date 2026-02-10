@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "autovacuum_multixact_freeze_max_age",
+  "category": "Autovacuum",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Maximum multixact age at which autovacuum triggers a VACUUM to prevent multixact ID wraparound in a table.",
+  "symptoms": [
+    "Multixact wraparound failure",
+    "Database shutdown due to wraparound risk",
+    "Autovacuum unable to prevent relminmxid exhaustion",
+    "Query failures with 'cannot assign multixact ID' errors"
+  ],
+  "dependencies": [
+    "multixact_freeze_min_age",
+    "autovacuum_freeze_max_age"
+  ],
+  "constraints": {
+    "hard_rule": "value > multixact_freeze_min_age",
+    "min": "10000",
+    "max": "2000000000"
+  },
+  "tuning_tips": "Set higher than multixact_freeze_min_age but low enough to ensure autovacuum runs before relminmxid approaches wraparound; reduce under heavy multi-transaction workloads or when seeing wraparound warnings.",
+  "default_formula": "400000000"
+}

@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "enable_hashagg",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Enables or disables the query planner's use of hash-based aggregation execution plans.",
+  "symptoms": [
+    "Suboptimal query plans for large-group aggregations",
+    "Excessive memory consumption during aggregation",
+    "Slow GROUP BY queries on large datasets",
+    "Increased disk spilling in sort-heavy workloads"
+  ],
+  "dependencies": [
+    "work_mem",
+    "enable_sort",
+    "enable_hashjoin",
+    "effective_cache_size"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Disable only if hash aggregation consistently produces worse plans than sort-based aggregation for your workload; monitor EXPLAIN output and aggregate query performance before and after change.",
+  "default_formula": null
+}

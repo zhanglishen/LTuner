@@ -1,1 +1,22 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "archive_mode",
+  "category": "WAL",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Enables archiving of completed WAL files using archive_command; required for point-in-time recovery and logical replication.",
+  "symptoms": [
+    "No point-in-time recovery capability",
+    "Backup failures due to missing WAL archives",
+    "Inability to promote standby to primary during failover",
+    "Data loss beyond last base backup"
+  ],
+  "dependencies": [
+    "wal_level",
+    "archive_command"
+  ],
+  "constraints": {
+    "hard_rule": "value != 'on' or 'always' if wal_level == 'minimal'"
+  },
+  "tuning_tips": "Enable 'on' for standard PITR and backups; use 'always' only when archiving is needed during standby recovery. Must be set before startup and requires wal_level >= 'replica'.",
+  "default_formula": null
+}

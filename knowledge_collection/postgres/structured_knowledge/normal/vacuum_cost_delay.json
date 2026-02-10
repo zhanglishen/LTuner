@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "vacuum_cost_delay",
+  "category": "Resource Usage",
+  "context": "user",
+  "unit": "ms",
+  "description": "Delay in milliseconds between vacuum cost units to throttle resource consumption during VACUUM operations.",
+  "symptoms": [
+    "High I/O or CPU usage during vacuum",
+    "Vacuum starvation leading to bloat growth",
+    "Long-running vacuum operations blocking autovacuum",
+    "Increased transaction wraparound risk"
+  ],
+  "dependencies": [
+    "vacuum_cost_limit",
+    "vacuum_cost_page_hit",
+    "vacuum_cost_page_miss",
+    "vacuum_cost_page_dirty"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0 and value <= 100",
+    "min": "0",
+    "max": "100"
+  },
+  "tuning_tips": "Start with 10–20 ms on busy systems to reduce I/O impact; increase only if autovacuum is still too aggressive, but avoid values > 50 ms unless under extreme load pressure.",
+  "default_formula": null
+}

@@ -1,1 +1,27 @@
-{"min_value": "1", "max_value": "4", "suggested_values": ["4"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_parallel_workers_per_gather",
+  "category": "Resource Usage",
+  "context": "user",
+  "unit": "count",
+  "description": "Maximum number of parallel worker processes that a single Gather or Gather Merge node can request from the pool defined by max_worker_processes and bounded by max_parallel_workers.",
+  "symptoms": [
+    "Underutilized CPU cores in analytical queries",
+    "Excessive memory consumption due to parallel worker overhead",
+    "Query plan fallback to serial execution (reduced throughput)",
+    "Resource contention leading to increased query latency",
+    "Worker starvation causing inconsistent parallelism"
+  ],
+  "dependencies": [
+    "max_worker_processes",
+    "max_parallel_workers",
+    "work_mem",
+    "max_parallel_workers_per_gather"
+  ],
+  "constraints": {
+    "hard_rule": "value <= min(max_worker_processes - 1, max_parallel_workers) and value <= num_cpu_cores",
+    "min": "0",
+    "max": "1024"
+  },
+  "tuning_tips": "Start with floor(num_cpu_cores / 2); reduce to 1–2 for OLTP workloads to avoid overhead; increase cautiously for analytical workloads, never exceeding available CPU cores. Always validate against actual parallel plan usage and memory pressure.",
+  "default_formula": "num_cpu_cores / 2"
+}

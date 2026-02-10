@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "temp_file_limit",
+  "category": "Resource Usage / Disk",
+  "context": "user",
+  "unit": "kB",
+  "description": "Limits the total size of all temporary files used by each database process.",
+  "symptoms": [
+    "Transaction cancellation on temp file overflow",
+    "Unexpected query failures during large sorts or hashes",
+    "High disk I/O from uncontrolled temp file growth",
+    "Disk space exhaustion on shared temporary storage"
+  ],
+  "dependencies": [
+    "work_mem",
+    "maintenance_work_mem",
+    "temp_buffers"
+  ],
+  "constraints": {
+    "hard_rule": "value <= disk_free_space_per_user_process * 0.8",
+    "min": "-1",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set to a realistic per-process disk quota based on available temporary storage and workload patterns; monitor pg_stat_database.temp_files and temp_bytes to inform sizing; leave as -1 (unlimited) only if disk space is abundant and usage is trusted.",
+  "default_formula": null
+}

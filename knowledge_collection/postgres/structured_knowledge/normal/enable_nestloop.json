@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on", "off"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "enable_nestloop",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Controls whether the query planner considers nested-loop join plans.",
+  "symptoms": [
+    "Suboptimal join performance on large tables",
+    "Excessive CPU usage from inefficient nested loops",
+    "Slow query execution when hash or merge joins would be faster",
+    "Poor scalability with increasing join input sizes"
+  ],
+  "dependencies": [
+    "enable_hashjoin",
+    "enable_mergejoin",
+    "join_collapse_limit",
+    "from_collapse_limit"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Disable only if nested-loop joins consistently cause poor performance and alternative join methods (hash/merge) are viable; monitor EXPLAIN output to verify plan changes.",
+  "default_formula": null
+}

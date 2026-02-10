@@ -1,1 +1,24 @@
-{"min_value": "8", "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_prepared_transactions",
+  "category": "Resource Usage / Memory",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Sets the maximum number of transactions that can be simultaneously in the prepared state.",
+  "symptoms": [
+    "Prepared transaction rejection",
+    "Failover failure on standby",
+    "Inconsistent replication state",
+    "Connection refusal when max_connections exceeded"
+  ],
+  "dependencies": [
+    "max_connections",
+    "shared_buffers"
+  ],
+  "constraints": {
+    "hard_rule": "value >= max_connections",
+    "min": "0",
+    "max": "262143"
+  },
+  "tuning_tips": "Set to at least max_connections; if using prepared transactions heavily, increase proportionally to expected concurrent prepared txns. Must be equal to or greater than master's value on standby servers.",
+  "default_formula": "max_connections"
+}

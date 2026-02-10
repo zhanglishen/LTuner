@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": ["7"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "autovacuum_max_workers",
+  "category": "Autovacuum",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Limits the number of concurrently running autovacuum worker processes.",
+  "symptoms": [
+    "Bloat accumulation in large tables",
+    "Query performance degradation due to stale statistics",
+    "Delayed vacuuming under high write load",
+    "Increased transaction ID wraparound risk"
+  ],
+  "dependencies": [
+    "autovacuum_vacuum_scale_factor",
+    "autovacuum_analyze_scale_factor",
+    "autovacuum_freeze_max_age",
+    "maintenance_work_mem"
+  ],
+  "constraints": {
+    "hard_rule": "value <= 262143 && value >= 1",
+    "min": "1",
+    "max": "262143"
+  },
+  "tuning_tips": "Set to (number of CPU cores - 1) for write-heavy workloads; avoid exceeding available I/O and memory capacity per worker. Monitor bloat and pg_stat_progress_vacuum to validate effectiveness.",
+  "default_formula": "min(max(3, cpu_cores - 1), 262143)"
+}

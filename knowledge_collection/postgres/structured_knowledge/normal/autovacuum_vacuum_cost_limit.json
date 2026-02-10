@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "autovacuum_vacuum_cost_limit",
+  "category": "Autovacuum",
+  "context": "sighup",
+  "unit": null,
+  "description": "Total vacuum cost budget available to all autovacuum workers before they pause; shared proportionally among concurrent workers.",
+  "symptoms": [
+    "Excessive I/O pressure during autovacuum",
+    "Long-running autovacuum blocking table bloat",
+    "Delayed cleanup causing transaction ID wraparound risk",
+    "High CPU or IO wait during maintenance windows"
+  ],
+  "dependencies": [
+    "autovacuum_vacuum_cost_delay",
+    "autovacuum_vacuum_cost_limit",
+    "autovacuum_max_workers",
+    "vacuum_cost_limit"
+  ],
+  "constraints": {
+    "hard_rule": "value >= -1 and value <= 10000",
+    "min": "-1",
+    "max": "10000"
+  },
+  "tuning_tips": "Increase to allow more aggressive autovacuum (e.g., 200–2000) on I/O-capable systems; decrease to reduce impact on production load. Monitor pg_stat_progress_vacuum and table bloat to balance responsiveness and resource contention.",
+  "default_formula": "-1 (enables automatic scaling based on vacuum_cost_limit)"
+}

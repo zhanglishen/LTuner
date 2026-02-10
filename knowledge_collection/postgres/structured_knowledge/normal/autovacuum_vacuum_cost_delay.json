@@ -1,1 +1,27 @@
-{"min_value": null, "max_value": null, "suggested_values": ["2 ms"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "autovacuum_vacuum_cost_delay",
+  "category": "Autovacuum",
+  "context": "sighup",
+  "unit": "ms",
+  "description": "Delay (in milliseconds) between vacuum cost units during autovacuum operations, used to throttle I/O and CPU impact.",
+  "symptoms": [
+    "High I/O wait during autovacuum",
+    "Stalled or lagging autovacuum progress",
+    "Uncontrolled bloat in heavily updated tables",
+    "Excessive CPU contention from concurrent autovacuum workers"
+  ],
+  "dependencies": [
+    "autovacuum_vacuum_cost_limit",
+    "autovacuum_vacuum_cost_delay",
+    "autovacuum_max_workers",
+    "vacuum_cost_limit",
+    "vacuum_cost_delay"
+  ],
+  "constraints": {
+    "hard_rule": "value >= -1 && value <= 100",
+    "min": "-1",
+    "max": "100"
+  },
+  "tuning_tips": "Decrease to speed up autovacuum on fast storage (e.g., NVMe); increase to reduce resource contention under high load. Prefer adjusting autovacuum_vacuum_cost_limit first for finer control.",
+  "default_formula": "2"
+}

@@ -1,1 +1,22 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "trace_notify",
+  "category": "Developer Options",
+  "context": "user",
+  "unit": null,
+  "description": "Enables verbose debugging output for LISTEN and NOTIFY operations.",
+  "symptoms": [
+    "Excessive log volume",
+    "Increased client/server log I/O",
+    "Degraded performance under high NOTIFY load",
+    "Unintended debug output in production logs"
+  ],
+  "dependencies": [
+    "client_min_messages",
+    "log_min_messages"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Enable only during targeted debugging of LISTEN/NOTIFY behavior; disable in production. Ensure client_min_messages or log_min_messages is set to DEBUG1 or lower to capture output.",
+  "default_formula": null
+}

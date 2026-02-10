@@ -1,1 +1,26 @@
-{"min_value": "10", "max_value": "40", "suggested_values": ["16"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_connections",
+  "category": "Connections and Authentication",
+  "context": "postmaster",
+  "unit": "count",
+  "description": "Sets the maximum number of concurrent client connections to the database server.",
+  "symptoms": [
+    "Connection refused errors",
+    "High memory usage (≈10MB per connection)",
+    "Poor query throughput under load",
+    "Standby replication failure if lower than master",
+    "OOM error under high connection concurrency"
+  ],
+  "dependencies": [
+    "shared_buffers",
+    "work_mem",
+    "effective_cache_size"
+  ],
+  "constraints": {
+    "hard_rule": "value <= 262143 && value >= 1",
+    "min": "1",
+    "max": "262143"
+  },
+  "tuning_tips": "Set to a low multiple (2–5×) of CPU cores when using transaction-mode connection pooling; otherwise, set to the peak expected concurrent users. Always configure connection pooling instead of scaling max_connections excessively.",
+  "default_formula": "min(100, 2 * num_cpu_cores)"
+}

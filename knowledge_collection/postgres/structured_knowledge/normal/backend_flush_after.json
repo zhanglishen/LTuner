@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["0"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "backend_flush_after",
+  "category": "Resource Usage",
+  "context": "user",
+  "unit": "8kB",
+  "description": "Number of pages (each 8 kB) written by a single backend after which previously performed writes are flushed to disk.",
+  "symptoms": [
+    "High transaction latency due to delayed writeback",
+    "Storage write amplification under heavy concurrent writes",
+    "Inconsistent I/O patterns causing bursty disk utilization",
+    "Increased risk of data loss on crash when set too high"
+  ],
+  "dependencies": [
+    "wal_writer_flush_after",
+    "checkpoint_flush_after",
+    "synchronous_commit"
+  ],
+  "constraints": {
+    "hard_rule": "value <= 256",
+    "min": "0",
+    "max": "256"
+  },
+  "tuning_tips": "Set to a small nonzero value (e.g., 32–128) to smooth I/O and reduce latency spikes; avoid 0 in write-heavy or durability-sensitive workloads. Monitor 'pg_stat_bgwriter' for 'buffers_backend_fsync' frequency.",
+  "default_formula": "RAM * 0.001 / 8192"
+}

@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "data_sync_retry",
+  "category": "Error Handling",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Controls whether PostgreSQL continues running after a failure to sync modified data files to disk.",
+  "symptoms": [
+    "Server crash on fsync failure",
+    "PANIC-level error during checkpoint",
+    "Unplanned downtime due to I/O write-back failure",
+    "Data loss risk from abrupt shutdown"
+  ],
+  "dependencies": [
+    "fsync",
+    "synchronous_commit",
+    "checkpoint_timeout"
+  ],
+  "constraints": {
+    "hard_rule": "value == true implies underlying OS must support reliable detection and recovery from write-back failures"
+  },
+  "tuning_tips": "Enable only if your OS and storage stack guarantee safe handling of partial write failures and you prioritize availability over strict durability; always test under simulated I/O failure conditions.",
+  "default_formula": null
+}

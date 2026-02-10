@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["50"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "autovacuum_vacuum_threshold",
+  "category": "Autovacuum",
+  "context": "sighup",
+  "unit": null,
+  "description": "Minimum number of updated or deleted tuples in a table that triggers an autovacuum VACUUM operation.",
+  "symptoms": [
+    "Bloat accumulation in heavily updated tables",
+    "Query performance degradation due to outdated statistics",
+    "Increased disk usage from dead tuples",
+    "Longer vacuum runtime when deferred too long"
+  ],
+  "dependencies": [
+    "autovacuum_vacuum_scale_factor",
+    "autovacuum_analyze_threshold",
+    "autovacuum_analyze_scale_factor"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0",
+    "min": "0",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Lower this value for tables with frequent updates/deletes to prevent bloat; raise it for mostly read-only tables to reduce autovacuum overhead. Prefer table-level overrides for heterogeneous workloads.",
+  "default_formula": null
+}

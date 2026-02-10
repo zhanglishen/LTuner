@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["30000 ms"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_standby_archive_delay",
+  "category": "Replication",
+  "context": "sighup",
+  "unit": "ms",
+  "description": "Maximum time a hot standby server waits before canceling conflicting queries while applying archived WAL data.",
+  "symptoms": [
+    "Query cancellations during WAL replay",
+    "Replication lag spikes under query load",
+    "Poor read scalability on standby",
+    "Inconsistent query results due to premature cancellation"
+  ],
+  "dependencies": [
+    "max_standby_streaming_delay",
+    "hot_standby",
+    "archive_mode"
+  ],
+  "constraints": {
+    "hard_rule": "value >= -1",
+    "min": "-1",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Increase to reduce query cancellations when archived WAL replay conflicts with long-running reads; decrease to prioritize replication freshness over query stability. Set to -1 to disable timeout entirely, but only if application logic tolerates indefinite blocking.",
+  "default_formula": "30000"
+}

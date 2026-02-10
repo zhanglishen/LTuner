@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["4"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_logical_replication_workers",
+  "category": "Replication",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Maximum number of logical replication worker processes (apply and table sync workers) that can run concurrently.",
+  "symptoms": [
+    "Replication lag under multiple subscriptions",
+    "Unused logical replication slots",
+    "High CPU or memory usage from excessive workers",
+    "Worker starvation due to insufficient allocation"
+  ],
+  "dependencies": [
+    "max_worker_processes",
+    "max_replication_slots",
+    "max_sync_workers_per_subscription"
+  ],
+  "constraints": {
+    "hard_rule": "value <= max_worker_processes - max_parallel_workers - max_worker_processes_reserved_for_background",
+    "min": "0",
+    "max": "262143"
+  },
+  "tuning_tips": "Set to at least the number of active logical subscriptions; increase incrementally if observing replication lag, but monitor resource consumption closely since each worker consumes memory and CPU.",
+  "default_formula": "min(4, number_of_logical_subscriptions)"
+}

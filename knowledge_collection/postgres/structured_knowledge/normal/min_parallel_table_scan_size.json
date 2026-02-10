@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": ["8 MB"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "min_parallel_table_scan_size",
+  "category": "Planner",
+  "context": "user",
+  "unit": "8kB",
+  "description": "Sets the minimum estimated table data size (in 8kB blocks) below which the planner will not consider a parallel table scan.",
+  "symptoms": [
+    "Suboptimal query plans for large tables",
+    "Missed parallelization opportunities",
+    "Unnecessarily slow sequential scans on large tables",
+    "Inconsistent parallelism across similar queries"
+  ],
+  "dependencies": [
+    "max_parallel_workers_per_gather",
+    "parallel_setup_cost",
+    "parallel_tuple_cost",
+    "effective_cache_size"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0",
+    "min": "0",
+    "max": "715827882"
+  },
+  "tuning_tips": "Increase this value to suppress parallel scans on moderately sized tables where overhead outweighs benefits; decrease to enable parallelism on smaller tables when I/O and CPU resources permit. Monitor EXPLAIN output and actual parallel worker usage to validate impact.",
+  "default_formula": "8 * 1024 / 8"
+}

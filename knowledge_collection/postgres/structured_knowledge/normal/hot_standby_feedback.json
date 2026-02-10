@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "hot_standby_feedback",
+  "category": "Replication",
+  "context": "sighup",
+  "unit": null,
+  "description": "Enables feedback from a hot standby to the primary to prevent query cancellations due to WAL cleanup, by informing the primary of running queries on the standby.",
+  "symptoms": [
+    "read-only query cancellations on standby",
+    "excessive table bloat on primary",
+    "increased WAL disk space usage",
+    "replication lag spikes due to WAL retention pressure"
+  ],
+  "dependencies": [
+    "wal_receiver_status_interval",
+    "max_standby_archive_delay",
+    "max_standby_streaming_delay"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Enable only when standby query cancellations are observed; monitor for bloat and WAL growth. Disable if bloat or WAL pressure becomes problematic.",
+  "default_formula": null
+}

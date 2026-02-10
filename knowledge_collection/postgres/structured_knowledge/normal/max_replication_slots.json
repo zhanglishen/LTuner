@@ -1,1 +1,25 @@
-{"min_value": "5", "max_value": null, "suggested_values": ["5"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "max_replication_slots",
+  "category": "Replication",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Sets the maximum number of simultaneously defined replication slots, which reserve WAL segments to prevent premature removal and enable reliable logical or physical standby synchronization.",
+  "symptoms": [
+    "Server fails to start when value is lower than existing slots",
+    "Standby servers fall behind or disconnect due to WAL removal",
+    "WAL accumulation and disk space exhaustion",
+    "Logical replication consumers stop receiving changes"
+  ],
+  "dependencies": [
+    "wal_level",
+    "max_wal_senders",
+    "wal_keep_size"
+  ],
+  "constraints": {
+    "hard_rule": "value >= current_number_of_replication_slots",
+    "min": "0",
+    "max": "262143"
+  },
+  "tuning_tips": "Set this value to at least the total number of physical and logical standbys plus any planned future slots; increase only as needed since each slot consumes memory and WAL retention overhead.",
+  "default_formula": "max(10, number_of_standby_servers + number_of_logical_replication_consumers)"
+}

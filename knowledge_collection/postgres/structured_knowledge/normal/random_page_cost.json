@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["1.2"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "random_page_cost",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Sets the planner's estimate of the cost of a non-sequentially fetched disk page, influencing join and index scan plan selection.",
+  "symptoms": [
+    "Suboptimal query plans (e.g., unnecessary sequential scans)",
+    "Poor index usage despite selective predicates",
+    "Increased query latency due to inefficient access paths"
+  ],
+  "dependencies": [
+    "seq_page_cost",
+    "effective_cache_size",
+    "cpu_tuple_cost",
+    "cpu_index_tuple_cost"
+  ],
+  "constraints": {
+    "hard_rule": "value > 0",
+    "min": "0",
+    "max": "1.79769e+308"
+  },
+  "tuning_tips": "Lower values (e.g., 1.0–1.5) favor index scans and are appropriate for fast random I/O (SSDs, high effective_cache_size); higher values (e.g., 3.0–4.0) favor sequential scans and suit HDDs or low cache hit rates. Tune based on observed I/O profile and EXPLAIN output.",
+  "default_formula": "4.0 (default), adjust downward proportionally to random I/O speed relative to sequential I/O (e.g., SSD: ~1.0–1.5, NVMe: ~1.0)"
+}

@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": ["0.0025"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "cpu_operator_cost",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Sets the query planner's estimated cost of executing each operator or function call during query execution.",
+  "symptoms": [
+    "Suboptimal query plans",
+    "Excessive use of sequential scans over indexes",
+    "Poor join strategy selection",
+    "Unexpectedly slow queries despite available indexes"
+  ],
+  "dependencies": [
+    "cpu_tuple_cost",
+    "cpu_index_tuple_cost",
+    "random_page_cost",
+    "seq_page_cost"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0",
+    "min": "0",
+    "max": "1.79769e+308"
+  },
+  "tuning_tips": "Decrease this value to make CPU-bound operations appear cheaper, encouraging more complex plans (e.g., index scans, nested loops); increase it to favor I/O-efficient plans (e.g., sequential scans, hash joins). Tune in concert with other cost constants and validate using EXPLAIN ANALYZE.",
+  "default_formula": null
+}

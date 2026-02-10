@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "geqo",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Enables or disables the genetic algorithm for query plan generation, used as an alternative to exhaustive search for complex queries.",
+  "symptoms": [
+    "Suboptimal query plans for complex joins",
+    "Excessive planning time for large join queries",
+    "Poor scalability with increasing number of join relations"
+  ],
+  "dependencies": [
+    "geqo_threshold",
+    "geqo_pool_size",
+    "geqo_generations",
+    "geqo_selection_bias",
+    "geqo_seed"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Keep 'geqo = on' for production unless diagnosing planner issues; disable only for debugging or when 'geqo_threshold' is set high enough that GEQO rarely triggers. Prefer tuning 'geqo_threshold' first to control when GEQO activates.",
+  "default_formula": null
+}

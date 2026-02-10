@@ -1,1 +1,26 @@
-{"min_value": null, "max_value": null, "suggested_values": ["512 kB"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "min_parallel_index_scan_size",
+  "category": "Planner",
+  "context": "user",
+  "unit": "8kB",
+  "description": "Sets the minimum estimated number of index pages (in 8kB units) that must be scanned before the query planner considers using a parallel index scan.",
+  "symptoms": [
+    "Missed parallelization opportunities",
+    "Suboptimal query plans for large index scans",
+    "Increased query latency on multi-core systems",
+    "Inefficient Parallel Vacuum execution"
+  ],
+  "dependencies": [
+    "max_parallel_workers_per_gather",
+    "parallel_setup_cost",
+    "parallel_tuple_cost",
+    "min_parallel_table_scan_size"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0",
+    "min": "0",
+    "max": "715827882"
+  },
+  "tuning_tips": "Increase this value on systems with high per-worker overhead or slow interconnects to avoid inefficient small parallel scans; decrease it on large, fast multi-core systems with ample workers to encourage more parallelism for moderately sized index scans.",
+  "default_formula": "512 * 1024 / 8192"
+}

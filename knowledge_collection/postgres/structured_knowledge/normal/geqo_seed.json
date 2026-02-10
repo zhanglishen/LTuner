@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "geqo_seed",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Seed value for the random number generator used by the Genetic Query Optimizer (GEQO) to explore join order search space.",
+  "symptoms": [
+    "Non-deterministic query plans across identical queries",
+    "Suboptimal join orders for complex queries",
+    "Inconsistent query performance under GEQO"
+  ],
+  "dependencies": [
+    "geqo",
+    "geqo_threshold",
+    "geqo_pool_size",
+    "geqo_generations"
+  ],
+  "constraints": {
+    "hard_rule": "0 <= value <= 1",
+    "min": "0",
+    "max": "1"
+  },
+  "tuning_tips": "Set to a fixed non-zero value (e.g., 0.5) to stabilize GEQO plan selection for debugging or reproducibility; leave at default 0 for full randomness in production unless plan instability is observed.",
+  "default_formula": null
+}

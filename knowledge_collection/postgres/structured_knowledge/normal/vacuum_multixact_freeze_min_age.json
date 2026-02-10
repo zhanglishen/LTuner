@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["5,000,000"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "vacuum_multixact_freeze_min_age",
+  "category": "WAL",
+  "context": "user",
+  "unit": null,
+  "description": "Minimum age (in number of multixact IDs) at which VACUUM freezes a MultiXactId in a table row to prevent wraparound.",
+  "symptoms": [
+    "MultiXact ID wraparound risk",
+    "Unplanned autovacuum storms",
+    "Bloat due to unfrozen multixact entries",
+    "Query failures with 'cannot freeze tuples' error"
+  ],
+  "dependencies": [
+    "autovacuum_multixact_freeze_max_age",
+    "vacuum_freeze_min_age",
+    "multixact_freeze_max_age"
+  ],
+  "constraints": {
+    "hard_rule": "value <= autovacuum_multixact_freeze_max_age / 2",
+    "min": "0",
+    "max": "1000000000"
+  },
+  "tuning_tips": "Set lower than autovacuum_multixact_freeze_max_age (ideally ≤ half) to allow proactive freezing before forced autovacuum; increase only if excessive freezing causes I/O pressure during normal VACUUM.",
+  "default_formula": "autovacuum_multixact_freeze_max_age * 0.5"
+}

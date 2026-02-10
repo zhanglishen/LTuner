@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "min_dynamic_shared_memory",
+  "category": "Resource Usage / Memory",
+  "context": "postmaster",
+  "unit": "MB",
+  "description": "Amount of dynamic shared memory reserved at PostgreSQL startup for use by parallel query workers and other dynamic memory consumers.",
+  "symptoms": [
+    "Parallel query failures",
+    "Insufficient memory for parallel workers",
+    "Query cancellation due to shared memory exhaustion",
+    "Unexpected fallback to sequential execution"
+  ],
+  "dependencies": [
+    "max_worker_processes",
+    "max_parallel_workers_per_gather",
+    "shared_buffers"
+  ],
+  "constraints": {
+    "hard_rule": "value <= (RAM * 0.1)",
+    "min": "0",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Set this to a value large enough to accommodate peak parallel worker memory needs; increase only if parallel queries fail with 'out of shared memory' errors. Requires server restart.",
+  "default_formula": "0"
+}

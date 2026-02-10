@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": ["5"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "commit_siblings",
+  "category": "WAL",
+  "context": "user",
+  "unit": null,
+  "description": "Minimum number of concurrent open transactions required before applying commit_delay to enable commit grouping.",
+  "symptoms": [
+    "Excessive WAL write frequency",
+    "Poor commit throughput under high concurrency",
+    "Increased latency for individual commits when grouping is missed",
+    "Suboptimal I/O batching for synchronous commits"
+  ],
+  "dependencies": [
+    "commit_delay",
+    "synchronous_commit"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 0 and value <= 1000",
+    "min": "0",
+    "max": "1000"
+  },
+  "tuning_tips": "Increase this value under high-concurrency workloads with many short transactions to improve commit grouping; reduce or set to 0 to disable grouping logic entirely. Monitor commit latency and WAL write patterns when adjusting.",
+  "default_formula": "5"
+}

@@ -1,1 +1,24 @@
-{"min_value": null, "max_value": null, "suggested_values": [], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "parallel_leader_participation",
+  "category": "Resource Usage",
+  "context": "user",
+  "unit": null,
+  "description": "Controls whether the leader backend participates in executing subplans under Gather or Gather Merge nodes, or only gathers results from parallel workers.",
+  "symptoms": [
+    "Suboptimal CPU utilization on multi-core systems",
+    "Longer query latency for short-to-medium duration parallel queries",
+    "Underutilization of available worker capacity",
+    "Increased coordinator overhead when leader is idle"
+  ],
+  "dependencies": [
+    "max_parallel_workers_per_gather",
+    "parallel_setup_cost",
+    "parallel_tuple_cost",
+    "effective_cache_size"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Enable (on) to improve throughput for queries where leader participation reduces overall latency; disable (off) if leader contention or memory pressure occurs during high-concurrency parallel workloads.",
+  "default_formula": null
+}

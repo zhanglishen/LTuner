@@ -1,1 +1,27 @@
-{"min_value": "12", "max_value": null, "suggested_values": ["12"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "geqo_threshold",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Sets the minimum number of FROM items in a query that triggers use of the Genetic Query Optimizer (GEQO) instead of the standard exhaustive search planner.",
+  "symptoms": [
+    "Excessively long query planning times for complex joins",
+    "Suboptimal query plans for large join queries",
+    "Increased CPU usage during planning phase",
+    "Query timeouts during planning for multi-table joins"
+  ],
+  "dependencies": [
+    "enable_geqo",
+    "geqo_effort",
+    "geqo_pool_size",
+    "geqo_generations",
+    "geqo_selection_bias"
+  ],
+  "constraints": {
+    "hard_rule": "value >= 2 && value <= 2147483647",
+    "min": "2",
+    "max": "2147483647"
+  },
+  "tuning_tips": "Increase this value to defer GEQO activation for more complex queries where exhaustive planning remains feasible; decrease only if planning time dominates execution time for moderately joined queries and GEQO yields better plans.",
+  "default_formula": "12"
+}

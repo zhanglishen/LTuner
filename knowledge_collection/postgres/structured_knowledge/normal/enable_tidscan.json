@@ -1,1 +1,22 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on", "off"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "enable_tidscan",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Enables or disables the query planner's use of TID Scan plan nodes, which directly retrieve rows by tuple identifier (TID) when feasible.",
+  "symptoms": [
+    "Suboptimal query plans for heap-only scans",
+    "Missed performance opportunities on narrow index-to-heap access patterns",
+    "Increased logical I/O for queries that could benefit from direct TID access"
+  ],
+  "dependencies": [
+    "enable_indexscan",
+    "enable_seqscan",
+    "enable_bitmapscan"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Leave enabled unless profiling shows TID scans consistently produce worse plans than alternatives; disable only for targeted plan stability in edge cases involving volatile TID assumptions.",
+  "default_formula": null
+}

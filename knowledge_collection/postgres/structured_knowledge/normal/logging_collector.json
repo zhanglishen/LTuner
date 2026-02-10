@@ -1,1 +1,25 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "logging_collector",
+  "category": "Reporting and Logging",
+  "context": "postmaster",
+  "unit": null,
+  "description": "Enables a dedicated subprocess to capture stderr output and CSV logs into rotating log files on disk.",
+  "symptoms": [
+    "Log message loss under high load",
+    "Inability to persist logs across restarts",
+    "Unstructured or missing log history for troubleshooting",
+    "stderr logs flooding system console or journal"
+  ],
+  "dependencies": [
+    "log_directory",
+    "log_filename",
+    "log_rotation_age",
+    "log_rotation_size",
+    "log_destination"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Enable it in production for reliable, file-based logging; disable only in minimal development environments where log persistence is unnecessary. Requires server restart to change.",
+  "default_formula": null
+}

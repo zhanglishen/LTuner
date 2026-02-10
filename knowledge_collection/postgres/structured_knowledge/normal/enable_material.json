@@ -1,1 +1,23 @@
-{"min_value": null, "max_value": null, "suggested_values": ["on", "off"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "enable_material",
+  "category": "Planner",
+  "context": "user",
+  "unit": null,
+  "description": "Controls whether the query planner considers materialization (caching intermediate results) as an execution strategy.",
+  "symptoms": [
+    "Suboptimal query plans for nested loops or repeated subqueries",
+    "Higher CPU usage due to redundant computation",
+    "Slower execution of queries with expensive, reusable subplans"
+  ],
+  "dependencies": [
+    "enable_hashjoin",
+    "enable_mergejoin",
+    "enable_nestloop",
+    "materialize_limit"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Disable only for debugging or to force alternative plans; avoid in production unless validated by EXPLAIN ANALYZE showing materialization harms performance.",
+  "default_formula": null
+}

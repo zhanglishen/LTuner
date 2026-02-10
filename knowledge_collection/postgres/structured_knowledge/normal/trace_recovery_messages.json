@@ -1,1 +1,22 @@
-{"min_value": null, "max_value": null, "suggested_values": ["debug5", "debug4", "debug3", "debug2", "debug1", "log"], "cpu": 8, "ram": 62, "disk_size": 884, "disk_type": "Unknown"}
+{
+  "name": "trace_recovery_messages",
+  "category": "Developer Options",
+  "context": "sighup",
+  "unit": null,
+  "description": "Controls verbosity of recovery-related debugging messages; overrides log_min_messages for recovery-specific logs.",
+  "symptoms": [
+    "Insufficient recovery diagnostics during failover",
+    "Inability to troubleshoot Hot Standby lag or errors",
+    "Excessive log volume causing disk I/O pressure or log rotation failures"
+  ],
+  "dependencies": [
+    "log_min_messages",
+    "logging_collector",
+    "log_destination"
+  ],
+  "constraints": {
+    "hard_rule": null
+  },
+  "tuning_tips": "Set to 'debug1'–'debug5' only during targeted recovery troubleshooting; revert to 'log' or higher in production to avoid log bloat. Requires reload (not restart) to take effect.",
+  "default_formula": null
+}
