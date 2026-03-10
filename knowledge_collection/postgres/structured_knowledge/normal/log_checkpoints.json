@@ -18,5 +18,14 @@
     "hard_rule": null
   },
   "tuning_tips": "Enable during performance investigations or capacity planning; disable in production if log volume is a concern. Requires SIGHUP to reload.",
-  "default_formula": null
+  "default_formula": null,
+  "suggested_values": [
+    "on"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

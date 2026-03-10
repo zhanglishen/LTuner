@@ -22,5 +22,12 @@
     "max": "2147483647"
   },
   "tuning_tips": "Increase to reduce checkpoint frequency under heavy write workloads; balance with available disk space and acceptable crash recovery time. Prefer timeout-driven over size-driven checkpoints where possible.",
-  "default_formula": "RAM * 0.02"
+  "default_formula": "RAM * 0.02",
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

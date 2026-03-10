@@ -1,0 +1,4 @@
+Time (seconds),Requests,Throughput (requests/second),Minimum Latency (microseconds),25th Percentile Latency (microseconds),Median Latency (microseconds),Average Latency (microseconds),75th Percentile Latency (microseconds),90th Percentile Latency (microseconds),95th Percentile Latency (microseconds),99th Percentile Latency (microseconds),Maximum Latency (microseconds)
+0,7,7.000,15942,33491,58084,96715,67473,401177,401177,401177,401177
+1,9,9.000,7379,38955,41919,56431,79513,128020,128020,128020,128020
+2,6,6.000,5680,12012,52154,62322,68251,217038,217038,217038,217038

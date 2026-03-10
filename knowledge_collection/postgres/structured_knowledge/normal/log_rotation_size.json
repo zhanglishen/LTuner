@@ -21,5 +21,12 @@
     "max": "2097151"
   },
   "tuning_tips": "Set based on expected log volume and disk capacity; increase for high-throughput systems with ample disk, decrease for constrained environments or fine-grained log retention. Monitor log growth rate to avoid rotation too frequently or too rarely.",
-  "default_formula": "10240"
+  "default_formula": "10240",
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": "39 GB",
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

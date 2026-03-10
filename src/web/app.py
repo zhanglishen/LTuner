@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GPTuner Web 界面主应用
+LTuner Web 界面主应用
 基于 Streamlit 的 DBA 友好界面
 """
 import sys
@@ -11,7 +11,7 @@ from datetime import datetime
 
 # 配置页面
 st.set_page_config(
-    page_title="GPTuner - 智能数据库调优系统",
+    page_title="LTuner - 智能数据库调优系统",
     page_icon="🚀",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -25,7 +25,7 @@ if 'config_manager' not in st.session_state:
     st.session_state.config_manager = get_config_manager()
 
 # 侧边栏导航
-st.sidebar.title("🚀 GPTuner")
+st.sidebar.title("🚀 LTuner")
 st.sidebar.markdown("---")
 
 page = st.sidebar.radio(
@@ -60,12 +60,12 @@ if status['last_tuning_time']:
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 关于")
 st.sidebar.info(
-    "**GPTuner** 是基于大模型和 RAG 的\n"
+    "**LTuner** 是基于大模型和自省式反馈的\n"
     "智能数据库调优系统\n\n"
-    "🔹 实时性能监控\n"
-    "🔹 场景感知推荐\n"
-    "🔹 安全规则引擎\n"
-    "🔹 一键回滚机制"
+    "🔹 LLM 自省反馈循环\n"
+    "🔹 MoE 多专家系统\n"
+    "🔹 因果知识图谱\n"
+    "🔹 安全规则引擎"
 )
 
 # ========== 页面路由 ==========

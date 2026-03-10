@@ -22,5 +22,12 @@
     "max": "100"
   },
   "tuning_tips": "Start with 10–20 ms on busy systems to reduce I/O impact; increase only if autovacuum is still too aggressive, but avoid values > 50 ms unless under extreme load pressure.",
-  "default_formula": null
+  "default_formula": null,
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

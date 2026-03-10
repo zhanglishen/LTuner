@@ -56,7 +56,7 @@ if __name__ == '__main__':
     dbms._connect("benchbase")
     # 启用 RAG 增强模式
     print("=" * 60)
-    print("[系统] 启动 GPTuner 增强版 - 集成 RAG 和场景识别")
+    print("[系统] 启动 GPTuner 基线模式 - 集成 RAG 和场景识别 (BO 对比基线)")
     print("=" * 60)
     knob_selection = KnobSelection(
         db=args.db, 

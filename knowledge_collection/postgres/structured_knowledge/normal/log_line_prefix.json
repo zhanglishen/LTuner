@@ -20,5 +20,12 @@
     "hard_rule": null
   },
   "tuning_tips": "Choose a prefix that includes sufficient identifiers (e.g., %m, %p, %u, %d, %a) for your observability and compliance needs; avoid excessive length or unsupported escapes to prevent parsing failures in log processors.",
-  "default_formula": null
+  "default_formula": null,
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

@@ -21,5 +21,12 @@
     "max": "2147483647"
   },
   "tuning_tips": "Set to a value slightly less than checkpoint_timeout to detect premature checkpoints caused by WAL segment exhaustion; increase max_wal_size if warnings persist. Zero disables the warning.",
-  "default_formula": "checkpoint_timeout * 0.75"
+  "default_formula": "checkpoint_timeout * 0.75",
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

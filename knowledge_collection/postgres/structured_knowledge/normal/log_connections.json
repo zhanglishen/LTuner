@@ -19,5 +19,12 @@
     "hard_rule": null
   },
   "tuning_tips": "Enable only in environments requiring connection auditing; disable in high-throughput production systems to avoid log bloat and I/O overhead. Pair with log_disconnections for full session visibility.",
-  "default_formula": null
+  "default_formula": null,
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

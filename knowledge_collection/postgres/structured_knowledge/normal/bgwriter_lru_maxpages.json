@@ -22,5 +22,15 @@
     "max": "1073741823"
   },
   "tuning_tips": "Increase gradually (e.g., by 50–100) if dirty buffers consistently exceed 80% of shared_buffers; reduce if background writer competes with backends for I/O bandwidth. Set to 0 only to disable LRU flushing entirely.",
-  "default_formula": "min(100, shared_buffers * 0.01)"
+  "default_formula": "min(100, shared_buffers * 0.01)",
+  "suggested_values": [
+    100,
+    0
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

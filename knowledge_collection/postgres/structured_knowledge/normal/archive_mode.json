@@ -18,5 +18,14 @@
     "hard_rule": "value != 'on' or 'always' if wal_level == 'minimal'"
   },
   "tuning_tips": "Enable 'on' for standard PITR and backups; use 'always' only when archiving is needed during standby recovery. Must be set before startup and requires wal_level >= 'replica'.",
-  "default_formula": null
+  "default_formula": null,
+  "suggested_values": [
+    "on"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

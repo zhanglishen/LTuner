@@ -1,25 +1,38 @@
 {
   "name": "maintenance_work_mem",
-  "category": "Resource",
+  "category": "Resource/Memory",
   "context": "user",
+  "type": "integer",
   "unit": "kB",
-  "description": "Sets the maximum memory available for maintenance operations such as VACUUM, CREATE INDEX, and ALTER TABLE ADD FOREIGN KEY.",
+  "constraints": {
+    "min": 1024,
+    "max": 2147483647,
+    "hard_rule": "maintenance_work_mem < total_ram_kb * 0.2"
+  },
+  "default_formula": "min(total_ram_kb * 0.05, 1 * 1024 * 1024)",
+  "description": "Specifies the maximum amount of memory to be used by maintenance operations, such as VACUUM, CREATE INDEX, and ALTER TABLE ADD FOREIGN KEY.",
   "symptoms": [
+    "slow vacuuming",
     "slow index creation",
-    "long-running autovacuum stalls",
-    "high memory pressure during maintenance tasks",
-    "excessive disk I/O in VACUUM operations"
+    "long downtime during database restoration/dumps",
+    "autovacuum taking too long"
   ],
   "dependencies": [
-    "autovacuum_max_workers",
-    "work_mem",
-    "shared_buffers"
+    "autovacuum_max_workers"
   ],
-  "constraints": {
-    "hard_rule": "value <= (RAM * 0.25) / autovacuum_max_workers",
-    "min": "1024",
-    "max": "2147483647"
-  },
-  "tuning_tips": "Increase for large databases or frequent maintenance workloads, but cap per-worker memory to avoid overwhelming system RAM; monitor actual usage via pg_stat_progress_vacuum and memory pressure during peak autovacuum activity.",
-  "default_formula": "RAM * 0.01"
+  "related_knobs": [
+    "work_mem",
+    "autovacuum_work_mem"
+  ],
+  "tuning_tips": "Larger settings perform maintenance tasks like VACUUM and CREATE INDEX faster. Since these are not frequent operations, you can set this much higher than work_mem.",
+  "official_snippet": "It is safe to set this much larger than work_mem, because only a few of these operations can run at the same time.",
+  "suggested_values": [
+    "1 GB"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

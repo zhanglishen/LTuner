@@ -22,5 +22,14 @@
     "max": "10"
   },
   "tuning_tips": "Increase for write-heavy workloads with large shared_buffers to reduce foreground write pressure; decrease if background writer activity causes I/O contention. Monitor pg_stat_bgwriter to assess effectiveness.",
-  "default_formula": "2.0"
+  "default_formula": "2.0",
+  "suggested_values": [
+    2.0
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

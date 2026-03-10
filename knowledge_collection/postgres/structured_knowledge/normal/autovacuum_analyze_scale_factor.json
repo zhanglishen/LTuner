@@ -21,5 +21,12 @@
     "max": "100"
   },
   "tuning_tips": "Lower this value (e.g., 0.02–0.05) for tables with frequent DML to keep statistics fresher; raise it (e.g., 0.2–0.5) for large, mostly-read-only tables to reduce ANALYZE overhead.",
-  "default_formula": "0.1"
+  "default_formula": "0.1",
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

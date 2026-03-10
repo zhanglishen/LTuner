@@ -1,30 +1,101 @@
 <img align='right' src="/assets/gptuner.png" alt="GPTuner logo" width="130">
 
-# GPTuner: A Manual-Reading Database Tuning System via GPT-Guided Bayesian Optimization
+# LTuner: 基于大语言模型自省反馈的轻量级数据库参数调优系统
 
-- [GPTuner](https://sigmodrecord.org/2025/04/16/gptuner-an-llm-based-database-tuning-system/) has been selected for the 🏆 **SIGMOD Research Highlight Award 2024!** 🏆
-  - Ten papers are selected [this year](https://sigmodrecord.org/publications/sigmodRecord/2503/pdfs/02_editor_notes.pdf)
-  - These papers are available in the [SIGMOD Record](https://sigmodrecord.org/category/research-highlights/)
-- This repository hosts the source code and supplementary materials for our:
-  - SIGMOD Research Highlight Award, [GPTuner: An LLM-Based Database Tuning System](https://doi.org/10.1145/3733620.3733641)
-  - VLDB 2024 submission (accepted), [GPTuner: A Manual-Reading Database Tuning System via GPT-Guided Bayesian Optimization](https://dl.acm.org/doi/abs/10.14778/3659437.3659449) 
-  - SIGMOD 2024 Demo submission (accepted), [A Demonstration of GPTuner: A GPT-Based Manual-Reading Database Tuning System](https://dl.acm.org/doi/10.1145/3626246.3654739) 
-- GPTuner collects and refines heterogeneous domain knowledge, unifies a structured view of the refined knowledge, and uses the knowlege to (1) select important knobs, (2) optimize the value range of each knob and (3) explore the optimized space with a novel Coarse-to-Fine Bayesian Optimization Framework.
-- A video demonstration is available at [YouTube!](https://youtu.be/Hz5Zck-9TlA)
-- The two datasets mentioned in the paper for evaluating LLMs are available at  [Google Drive](https://drive.google.com/file/d/1Ss6EL-B3lhKkwVNBW5vPu-JQ-IeldaUJ/edit)
->Stay tuned for the latest updates and enhancements in this project! 🚀<br/>
->Remember to star ⭐ and subscribe 🔔 for the newest features and improvements!
+> 本项目在 [GPTuner (VLDB 2024)](https://dl.acm.org/doi/abs/10.14778/3659437.3659449) 基础上进行了系统性改造，提出 **LTuner** —— 一种基于 LLM 自省式反馈（Self-Reflective Feedback）的数据库参数调优方法，替代原有贝叶斯优化框架，实现更高效、更安全的自动化调优。
+
+### 核心改进
+
+| 维度 | GPTuner (原始) | LTuner (本项目) |
+|------|---------------|-----------------|
+| **优化引擎** | SMAC3 贝叶斯优化（Coarse-to-Fine BO） | LLM 自省式反馈 + 文本梯度驱动 |
+| **参数筛选** | 静态旋钮选择 | MoE 多智能体专家动态评估 |
+| **值域优化** | GPT 单次生成 | Surveyor-Proposer-Corrector 三智能体协同剪枝 |
+| **安全机制** | 崩溃后恢复 | 规则引擎预校验 + 单位自动修正 |
+| **知识利用** | Prompt Ensemble 结构化 | 因果知识图谱 + RAG 语义检索 |
+| **LLM 依赖** | GPT-4 (高成本) | 通义千问 qwen-plus (低成本) |
+
+### 实验结果摘要 (TPC-H, PostgreSQL 14)
+
+| 指标 | GPTuner (BO) | LTuner (Self-Reflective) |
+|------|-------------|-------------------------|
+| **延迟改善** | 2.8% | **12.8%** |
+| **最佳延迟** | 68,086 μs | **61,065 μs** |
+| **所需迭代** | 70 轮 | **20 轮** (减少 71.4%) |
+| **调优耗时** | 14 分钟 | **10 分钟** (减少 27.7%) |
+| **配置崩溃** | 大量 (74%+) | **0 次** |
+
+---
+
+**原始 GPTuner 相关信息：**
+- GPTuner 获得 SIGMOD Research Highlight Award 2024
+- 原始论文：[VLDB 2024](https://dl.acm.org/doi/abs/10.14778/3659437.3659449) | [SIGMOD 2024 Demo](https://dl.acm.org/doi/10.1145/3626246.3654739) | [SIGMOD Record](https://doi.org/10.1145/3733620.3733641)
+- 视频演示：[YouTube](https://youtu.be/Hz5Zck-9TlA)
 
 ## Table of Contents
-- [System Overview](#system-overview)
+- [LTuner System Overview](#ltuner-system-overview)
+- [GPTuner System Overview](#gptuner-system-overview)
 - [Quick Start](#quick-start)
+- [LTuner vs GPTuner Comparison](#ltuner-vs-gptuner-comparison)
 - [Demo Guidance](#demo-usage-guide)
-- [Experimental Results](#experimental-result)
 - [Code Structure](#code-structure)
 - [Roadmap](#roadmap)
 - [Citation](#citation)
 
-## System Overview
+## LTuner System Overview
+
+LTuner 采用 **LLM 自省式反馈（Self-Reflective Feedback）** 替代传统贝叶斯优化，通过让大语言模型分析每轮调优的性能变化，生成"文本梯度"指导下一轮参数调整，实现高效收敛。
+
+### 系统架构
+
+```
+LTuner 调优工作流
+┌─────────────────────────────────────────────────────────────┐
+│  Step 1: 环境感知                                            │
+│  ┌──────────────┐   ┌──────────────────┐                    │
+│  │ PostgreSQL   │──>│ Feature          │──> 语义化环境描述   │
+│  │ Monitor      │   │ Translator       │                    │
+│  └──────────────┘   └──────────────────┘                    │
+├─────────────────────────────────────────────────────────────┤
+│  Step 2: 智能参数筛选                                        │
+│  ┌──────────────┐   ┌──────────────────┐                    │
+│  │ Causal       │──>│ MoE Experts      │──> Top-K 关键旋钮  │
+│  │ Graph        │   │ (7类子领域专家)    │                    │
+│  └──────────────┘   └──────────────────┘                    │
+├─────────────────────────────────────────────────────────────┤
+│  Step 3: 安全值域剪枝 (Surveyor-Proposer-Corrector)          │
+│  ┌──────────┐  ┌───────────┐  ┌───────────┐                │
+│  │ Surveyor │─>│ Proposer  │─>│ Corrector │──> 安全值域     │
+│  │ 范围勘测  │  │ 值域推荐   │  │ 安全校验   │                │
+│  └──────────┘  └───────────┘  └───────────┘                │
+├─────────────────────────────────────────────────────────────┤
+│  Step 4: 自省式反馈调优循环                                   │
+│  ┌────────────────────────────────────────────┐             │
+│  │  LLM 生成初始配置                            │             │
+│  │       ↓                                     │             │
+│  │  应用配置 → 运行 Benchmark → 采集性能指标     │             │
+│  │       ↓                                     │             │
+│  │  LLM 自省分析 → 生成"文本梯度"               │ ← 核心创新  │
+│  │       ↓                                     │             │
+│  │  基于梯度生成新配置 → 循环迭代                │             │
+│  └────────────────────────────────────────────┘             │
+├─────────────────────────────────────────────────────────────┤
+│  Step 5: 输出最优配置 + 调优报告                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 核心模块说明
+
+| 模块 | 文件 | 功能 |
+|------|------|------|
+| **特征语义翻译器** | `feature_translator.py` | 将数据库原始指标（QPS、缓存命中率等）转化为 LLM 可理解的自然语言描述 |
+| **因果知识图谱** | `causal_graph.py` | 构建参数间因果关系图，支持多跳推理（如 shared_buffers → effective_cache_size） |
+| **MoE 多智能体专家** | `moe_experts.py` | 7 类子领域专家（内存、I/O、查询执行等）动态评估，加权融合筛选 Top-K 旋钮 |
+| **SPC 值域剪枝** | `value_pruner.py` | Surveyor 勘测范围 → Proposer 推荐值域 → Corrector 安全校验 |
+| **自省式反馈引擎** | `reflective_engine.py` | 核心引擎：LLM 分析性能变化因果关系，生成文本梯度，驱动配置迭代优化 |
+| **LTuner 编排器** | `ltuner_orchestrator.py` | 串联完整工作流：环境感知 → 参数筛选 → 值域剪枝 → 自省反馈循环 → 结果输出 |
+
+## GPTuner System Overview
 
 <img src="/assets/gptuner_overview.png" alt="GPTuner overview" width="800">
 
@@ -77,7 +148,23 @@ PYTHONPATH=src python src/run_gptuner.py postgres tpch 180 -seed=100
 ```
 where `<dbms>` specifies the DBMS (e.g., postgres or mysql), `<benchmark>` is the target workload (e.g., tpch or tpcc), `<timeout>` is the maximum time allowed to stress-test the benchmark, `<seed>` is the random seed used by the optimizer.
 
-### Step 6: View the optimization result:
+### Step 6: Execute LTuner (recommended)
+
+```
+# 运行 LTuner 自省式反馈调优
+PYTHONPATH=src python src/run_ltuner.py
+```
+
+### Step 7: Run GPTuner vs LTuner Comparison Experiment
+
+```
+# 运行完整对比实验（GPTuner BO vs LTuner Self-Reflective）
+cd /root/GPTuner
+python src/experiments/run_real_comparison.py
+```
+实验结果（JSON + 图表）将保存在 `optimization_results/comparison_real/` 目录下。
+
+### Step 8: View the optimization result:
 The optimization result is stored in `optimization_results/{dbms}/{stage}/{seed}/runhistory.json`, where `{dbms}` is the target DBMS, `{stage}` is coarse or fine and `{seed}` is the random seed given by user.
 - the `data` block contains the following information, we explain the project-related information below. For more details, please refer to [SMAC3 Library](https://github.com/automl/SMAC3).
     - `config_id`: i is the identifier for the knob configuration given by i-th iteration 
@@ -129,12 +216,66 @@ We compare GPTuner with baselines on different DBMS (PostgreSQL and MySQL), benc
 
 <img src="/assets/gptuner_result_postgresql.png" alt="GPTuner result on postgres" width="500">
 
+## LTuner vs GPTuner Comparison
+
+### 实验设置
+
+| 配置项 | 值 |
+|--------|-----|
+| 数据库 | PostgreSQL 14.20 |
+| 基准测试 | TPC-H (OLAP) |
+| 优化目标 | 延迟（Latency，越低越好）|
+| GPTuner 轮次 | Coarse 30 + Fine 40 = 70 轮 |
+| LTuner 轮次 | 20 轮自省反馈 |
+| LLM | 通义千问 qwen-plus |
+| 目标旋钮数 | 57 个 |
+
+### 实验结果
+
+<img src="/optimization_results/comparison_real/real_tpch_performance.png" alt="Performance Comparison" width="700">
+
+| 指标 | GPTuner (BO) | LTuner (Self-Reflective) | 改善 |
+|------|-------------|-------------------------|------|
+| 延迟改善 | 2.8% | **12.8%** | LTuner 提升幅度是 GPTuner 的 **4.6 倍** |
+| 最佳延迟 | 68,086 μs | **61,065 μs** | 降低 10.3% |
+| 所需迭代 | 70 轮 | **20 轮** | 减少 **71.4%** |
+| 总耗时 | 14 分钟 | **10 分钟** | 减少 **27.7%** |
+| 配置崩溃率 | ~74% | **0%** | LTuner 零崩溃 |
+
+### 收敛曲线对比
+
+<img src="/optimization_results/comparison_real/real_tpch_convergence.png" alt="Convergence Curve" width="700">
+
+- **橙色 (LTuner)**：始终在低延迟区间稳定波动，第 6 轮即达到最佳 61,065 μs
+- **蓝色 (GPTuner)**：剧烈震荡，大量迭代因配置崩溃返回极高惩罚值
+
+### 效率对比
+
+<img src="/optimization_results/comparison_real/real_tpch_time.png" alt="Efficiency Comparison" width="700">
+
+### 总览仪表盘
+
+<img src="/optimization_results/comparison_real/real_tpch_dashboard.png" alt="Dashboard" width="700">
+
+### 分析
+
+GPTuner 性能不佳的原因：
+1. **SMAC 盲目采样**：Latin Hypercube 初始设计生成极端参数组合（如 shared_buffers 超过物理内存），导致 74%+ 的配置崩溃
+2. **高维空间低效**：57 个旋钮的组合空间巨大，70 轮迭代中仅约 18 轮成功执行 benchmark，有效样本严重不足
+3. **无语义理解**：贝叶斯优化不理解参数间的语义约束
+
+LTuner 优势：
+1. **领域知识驱动**：LLM 理解参数语义，不会生成不安全的配置
+2. **文本梯度反馈**：每轮分析性能变化的因果关系，快速收敛到最优区域
+3. **零崩溃**：因果知识图谱 + 规则引擎确保配置安全性
+
 ## Code Structure
 - `configs/`
   - `postgres.ini`: Configuration file to optimize PostgreSQL
   - `mysql.ini`: Configuration file to optimize MySQL
 - `optimization_results/`
   - `temp_results/`: Temporary storage for optimization results
+  - `comparison_real/`: LTuner vs GPTuner comparison experiment results and charts
   - `postgres/`
     - `coarse/`: Coarse-stage optimization results for PostgreSQL
     - `fine/`: Fine-stage optimization results for PostgreSQL
@@ -157,10 +298,38 @@ We compare GPTuner with baselines on different DBMS (PostgreSQL and MySQL), benc
     - `tuning_lake/`: Data lake for DBMS tuning knowledge
     - `structured_knowledge/`
       - `special/`: Specialized structured knowledge
-      - `normal/`: General structured knowledge
+      - `normal/`: General structured knowledge (enriched with suggested_values, min/max)
+- `knowledge_base/`: RAG knowledge base for LTuner
+  - `postgres_knowledge_base.pkl`: Pre-built PostgreSQL knowledge base
+  - `postgres_faiss.index`: FAISS vector index for semantic retrieval
+  - `postgres_embeddings.npy`: Sentence-BERT embeddings
 - `example_pool/`: Pool of examples for prompt ensemble algorithm
 - `sql`: Provide sql statements if you need query-level knob selection
 - `src/`: Source code
+  - **`ltuner/`**: **LTuner core engine modules (NEW)**
+    - `feature_translator.py`: Feature semantic translator - converts raw DB metrics to natural language
+    - `causal_graph.py`: Causal knowledge graph - models parameter dependencies with multi-hop reasoning
+    - `moe_experts.py`: MoE multi-agent expert system - 7 sub-domain evaluators with dynamic weighting
+    - `value_pruner.py`: Surveyor-Proposer-Corrector value range pruning pipeline
+    - `reflective_engine.py`: Self-reflective feedback tuning engine - generates "text gradients" for optimization
+    - `ltuner_orchestrator.py`: LTuner main orchestrator - coordinates the entire tuning workflow
+  - **`experiments/`**: **Comparison experiment framework (NEW)**
+    - `comparison.py`: Comparison runner for GPTuner vs LTuner experiments
+    - `run_real_comparison.py`: Real benchmark comparison script (TPC-H)
+    - `visualizer.py`: Experiment result visualization (generates PNG charts)
+  - **`rag_engine/`**: **RAG retrieval engine (NEW)**
+    - `knowledge_builder.py`: Knowledge base builder from structured knowledge
+    - `retriever.py`: Semantic retrieval with FAISS + Sentence-BERT
+  - **`monitoring/`**: **Real-time monitoring (NEW)**
+    - `postgres_monitor.py`: PostgreSQL metrics collector (QPS, cache hit ratio, etc.)
+    - `workload_analyzer.py`: Workload pattern analyzer
+  - **`rule_engine/`**: **Safety rule engine (NEW)**
+    - `safety_engine.py`: Configuration safety validator
+    - `parameter_validator.py`: Parameter range and constraint checker
+    - `conflict_detector.py`: Parameter conflict detection
+  - **`scenario_engine/`**: **Scenario classification (NEW)**
+    - `classifier.py`: Workload scenario classifier (OLTP/OLAP/Hybrid)
+    - `prompt_templates.py`: Scenario-aware prompt templates
   - `demo/`: Module to execute the GUI (Demonstration Code)
   - `dbms/`
     - `dbms_template.py`: Template for database management systems
@@ -179,15 +348,27 @@ We compare GPTuner with baselines on different DBMS (PostgreSQL and MySQL), benc
     - `workload_runner.py`: Module to run workloads
     - `coarse_stage.py`: Recommender for coarse stage configuration (**Sec. 7**)
     - `fine_stage.py`: Recommender for fine stage configuration (**Sec. 7**)
-  - `run_gptuner.py`: Main script to run GPTuner
+  - `run_ltuner.py`: **Main script to run LTuner (NEW)**
+  - `run_gptuner.py`: Main script to run GPTuner (original baseline)
 
 ## Roadmap
-- Paper version
+- Paper version (GPTuner)
   - [x] GPTuner uses OpenAI completion API of `gpt-4` or `gpt-3.5-turbo`
   - [x] GPTuner leverages tuning knowledge from `GPT-4`, `DBMS official manuals` and `web contents`
   - [x] GPTuner supports `PostgreSQL` and `MySQL`
   - [x] GPTuner stress-tests workloads through the `BenchBase` tool
-- Future implementation (We warmly invite and appreciate your contributions! 👫)
+- LTuner enhancements (本项目新增)
+  - [x] LTuner 自省式反馈调优引擎，替代贝叶斯优化
+  - [x] MoE 多智能体专家系统，动态评估参数重要性
+  - [x] Surveyor-Proposer-Corrector 三智能体值域剪枝
+  - [x] 因果知识图谱，支持参数间多跳推理
+  - [x] RAG 语义检索引擎（FAISS + Sentence-BERT）
+  - [x] 规则引擎：资源适配、防崩溃、参数冲突检测
+  - [x] 场景感知分类（OLTP/OLAP/混合负载）
+  - [x] 实时监控模块（PostgreSQL 指标采集与工作负载分析）
+  - [x] 支持通义千问 qwen-plus 作为低成本 LLM 替代方案
+  - [x] GPTuner vs LTuner 对比实验框架与可视化
+- Future implementation (We warmly invite and appreciate your contributions!)
   - [ ] GPTuner employs `locally depolyed large language models` as well
   - [ ] GPTuner collects web contents through `web-gpt` and `web-crawler`
   - [ ] GPTuner uses a `generic` stress-test tool, supporting `any given workload` optimization

@@ -20,5 +20,14 @@
     "max": "2147483647"
   },
   "tuning_tips": "Increase cautiously for complex queries with many correlated subqueries to improve plan quality; avoid setting it >= geqo_threshold unless intentional, as it may trigger GEQO and degrade plan quality. Monitor planning time and plan stability after changes.",
-  "default_formula": "8"
+  "default_formula": "8",
+  "suggested_values": [
+    8
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

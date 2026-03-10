@@ -337,7 +337,7 @@ class TuningOrchestrator:
             完整工作流报告
         """
         print(f"\n{'='*60}")
-        print(f"GPTuner 自适应调优系统")
+        print(f"LTuner 自适应调优系统")
         print(f"模式: {'自动' if auto_apply else 'DBA 审批'}")
         print(f"安全检查: {'已启用' if enable_safety_check and self.enable_safety_check else '未启用'}")
         print(f"{'='*60}\n")

@@ -20,5 +20,14 @@
     "max": "1"
   },
   "tuning_tips": "Increase toward 0.9–0.95 to spread I/O load and avoid spikes; reduce only if checkpoints consistently finish too early and cause frequent small checkpoints.",
-  "default_formula": "0.9"
+  "default_formula": "0.9",
+  "suggested_values": [
+    0.9
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

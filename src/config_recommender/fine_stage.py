@@ -38,10 +38,12 @@ class FineStage(FineSpace):
         with open(self.coarse_path, "r") as json_file:
             data = json.load(json_file)
         costs = []
-        for i in range(30):
+        n_available = len(data["data"])
+        n_configs = min(30, n_available)
+        for i in range(n_configs):
             costs.append(data["data"][i][4])
         # the [:x] configurations with minimal costs
-        index_min_pairs = sorted(enumerate(costs), key=lambda x: x[1])[:30]
+        index_min_pairs = sorted(enumerate(costs), key=lambda x: x[1])[:n_configs]
         # no ordering
         # for index, value in enumerate(costs):
         for index, value in index_min_pairs:

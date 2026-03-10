@@ -21,5 +21,15 @@
     "max": "2147483647"
   },
   "tuning_tips": "Set to 0 to cancel conflicting queries immediately; set higher (e.g., 30000–60000) to tolerate brief lag and reduce cancellations; avoid indefinite (-1) in latency-sensitive read workloads. Always pair with hot_standby_feedback for better conflict avoidance.",
-  "default_formula": "30000"
+  "default_formula": "30000",
+  "suggested_values": [
+    0,
+    "30 s"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

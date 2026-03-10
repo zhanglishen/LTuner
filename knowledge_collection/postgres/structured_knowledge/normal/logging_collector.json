@@ -21,5 +21,14 @@
     "hard_rule": null
   },
   "tuning_tips": "Enable it in production for reliable, file-based logging; disable only in minimal development environments where log persistence is unnecessary. Requires server restart to change.",
-  "default_formula": null
+  "default_formula": null,
+  "suggested_values": [
+    "on"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

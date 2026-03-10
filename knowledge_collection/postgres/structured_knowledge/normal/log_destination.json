@@ -21,5 +21,17 @@
     "hard_rule": null
   },
   "tuning_tips": "Enable 'csvlog' only if logging_collector is on; combine destinations (e.g., 'stderr,csvlog') for redundancy and structured analysis; prefer 'syslog' for integration with enterprise log management.",
-  "default_formula": null
+  "default_formula": null,
+  "suggested_values": [
+    "stderr",
+    "csvlog",
+    "syslog",
+    "eventlog"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

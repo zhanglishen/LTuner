@@ -21,5 +21,12 @@
     "max": "86400"
   },
   "tuning_tips": "Increase to reduce I/O pressure and checkpoint frequency if recovery time tolerance allows; decrease to limit potential data loss and shorten recovery, especially under high WAL volume.",
-  "default_formula": "300"
+  "default_formula": "300",
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

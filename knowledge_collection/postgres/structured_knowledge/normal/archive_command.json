@@ -19,5 +19,12 @@
     "hard_rule": "archive_mode must be 'on' or 'always' for archive_command to take effect"
   },
   "tuning_tips": "Set to a reliable, idempotent shell command (e.g., rsync or cp with proper error handling); ensure target directory is writable by the postgres user and has sufficient space; test exit codes rigorously.",
-  "default_formula": null
+  "default_formula": null,
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

@@ -19,5 +19,14 @@
     "hard_rule": null
   },
   "tuning_tips": "Enable only when standby query cancellations are observed; monitor for bloat and WAL growth. Disable if bloat or WAL pressure becomes problematic.",
-  "default_formula": null
+  "default_formula": null,
+  "suggested_values": [
+    "on"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

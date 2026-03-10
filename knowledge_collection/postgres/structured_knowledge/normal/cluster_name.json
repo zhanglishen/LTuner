@@ -16,5 +16,12 @@
     "hard_rule": "length(value) <= 64 && value matches /^[[:print:]]+$/"
   },
   "tuning_tips": "Set to a short, descriptive ASCII string (e.g., 'prod-us-east', 'staging-replica') that uniquely identifies the cluster; avoid spaces or special characters.",
-  "default_formula": null
+  "default_formula": null,
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

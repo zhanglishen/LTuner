@@ -22,5 +22,12 @@
     "max": "2000000000"
   },
   "tuning_tips": "Set to a value significantly lower than the 2-billion-XID wraparound limit; reduce for tables with high transaction churn to avoid sudden wraparound emergencies, but avoid setting too low to prevent excessive autovacuum overhead.",
-  "default_formula": "min(200000000, max(1000000, 0.1 * expected_transactions_per_table_before_wraparound))"
+  "default_formula": "min(200000000, max(1000000, 0.1 * expected_transactions_per_table_before_wraparound))",
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": "200,000,000",
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

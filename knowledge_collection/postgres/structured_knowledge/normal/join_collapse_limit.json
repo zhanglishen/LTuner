@@ -22,5 +22,14 @@
     "max": "2147483647"
   },
   "tuning_tips": "Set to 1 to disable join flattening and enforce explicit join order for predictable plans; increase only if queries with many explicit JOINs suffer from poor plan choices, but monitor planning overhead.",
-  "default_formula": "8"
+  "default_formula": "8",
+  "suggested_values": [
+    1
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

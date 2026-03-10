@@ -20,5 +20,12 @@
     "max": "2147483647"
   },
   "tuning_tips": "Set to a small positive value (e.g., 1024 for 1MB) to log large temp files during investigation; set to -1 to disable. Monitor logs to identify queries spilling to disk, then tune work_mem accordingly.",
-  "default_formula": null
+  "default_formula": null,
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

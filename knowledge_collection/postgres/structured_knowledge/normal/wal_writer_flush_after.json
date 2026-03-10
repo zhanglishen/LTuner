@@ -21,5 +21,15 @@
     "max": "2147483647"
   },
   "tuning_tips": "Increase for write-heavy workloads with fast storage to reduce flush frequency; decrease (or set to 0) for strict durability requirements or when synchronous_commit is off. Monitor pg_stat_bgwriter.wal_written and wal_fpi_rate to assess impact.",
-  "default_formula": "128 * 8kB // i.e., 1MB"
+  "default_formula": "128 * 8kB // i.e., 1MB",
+  "suggested_values": [
+    0,
+    "1 MB"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

@@ -21,5 +21,14 @@
     "max": "262143"
   },
   "tuning_tips": "Set to at least the number of CPU cores; match or exceed the master's value on standby servers. Increase only if deploying many parallel queries, logical replication, or custom background workers.",
-  "default_formula": "CPU_CORES"
+  "default_formula": "CPU_CORES",
+  "suggested_values": [
+    2
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

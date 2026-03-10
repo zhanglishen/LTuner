@@ -1,26 +1,40 @@
 {
   "name": "max_connections",
-  "category": "Connections and Authentication",
+  "category": "Connectivity",
   "context": "postmaster",
+  "type": "integer",
   "unit": "count",
-  "description": "Sets the maximum number of concurrent client connections to the database server.",
+  "constraints": {
+    "min": 1,
+    "max": 262143,
+    "hard_rule": "max_connections * 10MB < total_ram_mb"
+  },
+  "default_formula": "min(cpu_count * 4, 300)",
+  "description": "Determines the maximum number of concurrent connections to the database server.",
   "symptoms": [
-    "Connection refused errors",
-    "High memory usage (≈10MB per connection)",
-    "Poor query throughput under load",
-    "Standby replication failure if lower than master",
-    "OOM error under high connection concurrency"
+    "connection refused errors",
+    "FATAL: sorry, too many clients already",
+    "high context switching",
+    "high resource contention"
   ],
   "dependencies": [
     "shared_buffers",
-    "work_mem",
-    "effective_cache_size"
+    "work_mem"
   ],
-  "constraints": {
-    "hard_rule": "value <= 262143 && value >= 1",
-    "min": "1",
-    "max": "262143"
-  },
-  "tuning_tips": "Set to a low multiple (2–5×) of CPU cores when using transaction-mode connection pooling; otherwise, set to the peak expected concurrent users. Always configure connection pooling instead of scaling max_connections excessively.",
-  "default_formula": "min(100, 2 * num_cpu_cores)"
+  "related_knobs": [
+    "superuser_reserved_connections",
+    "max_worker_processes"
+  ],
+  "tuning_tips": "Do not set this too high. Each connection uses memory (work_mem, etc.) and OS resources. For high concurrency, use a connection pooler (like PgBouncer) instead of raising this limit directly.",
+  "official_snippet": "Defining this parameter effectively defines the maximum number of backend processes that can run simultaneously.",
+  "suggested_values": [
+    4,
+    10
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

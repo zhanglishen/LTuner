@@ -18,7 +18,7 @@ from ConfigSpace import (
 
 
 class DefaultSpace:
-    """ Base template of GPTuner"""
+    """ Base template of LTuner (originally GPTuner)"""
     def __init__(self, dbms, test, timeout, target_knobs_path,seed=1):
         self.dbms = dbms
         self.seed = seed if seed is not None else 1

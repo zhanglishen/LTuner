@@ -19,5 +19,14 @@
     "max": "2147483647"
   },
   "tuning_tips": "Set slightly above the 95th percentile of typical transaction duration to avoid premature deadlock checks; increase cautiously if false deadlocks are observed, but avoid setting too high to prevent delayed error reporting.",
-  "default_formula": "1000"
+  "default_formula": "1000",
+  "suggested_values": [
+    "1 s"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

@@ -21,5 +21,14 @@
     "max": "10000"
   },
   "tuning_tips": "Increase for large tables with skewed data distributions to improve planner accuracy; reduce if ANALYZE time is excessive and plans are already acceptable. Test changes with EXPLAIN and monitor plan stability.",
-  "default_formula": "100 * (table_size_in_GB > 10 ? 2 : 1)"
+  "default_formula": "100 * (table_size_in_GB > 10 ? 2 : 1)",
+  "suggested_values": [
+    200
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

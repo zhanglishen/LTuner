@@ -38,6 +38,14 @@ class CoarseSpace(DefaultSpace):
                 with open(os.path.join(self.skill_path, file_name), 'r') as json_file:
                     data = json.load(json_file)
                 
+                # 兼容新旧格式：检查 suggested_values 是否存在
+                if "suggested_values" not in data:
+                    # 新格式知识文件，回退到默认搜索空间
+                    print(f"No suggested_values for {knob}, using default space")
+                    knob_hp = self.get_default_space(knob, info)
+                    self.search_space.add_hyperparameter(knob_hp)
+                    continue
+
                 print(f"Defining coarse search space for knob: {knob}")
                 suggested_values = data["suggested_values"]
                 boot_value = info["reset_val"]
@@ -45,12 +53,12 @@ class CoarseSpace(DefaultSpace):
 
                 # hardware constraint if exists
                 min_from_sys, max_from_sys = False, False
-                min_value = data["min_value"]
+                min_value = data.get("min_value")
                 if min_value is None:
                     min_value = info["min_val"]
                     min_from_sys = True
                 
-                max_value = data["max_value"]
+                max_value = data.get("max_value")
                 if max_value is None:
                     max_value = info["max_val"]
                     max_from_sys = True

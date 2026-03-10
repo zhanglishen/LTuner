@@ -21,5 +21,14 @@
     "max": "10000"
   },
   "tuning_tips": "Increase this value (e.g., 500–1000 ms) to reduce WAL writer wakeups and I/O overhead on high-throughput systems; decrease only if low-latency WAL persistence is critical and hardware supports it.",
-  "default_formula": "200"
+  "default_formula": "200",
+  "suggested_values": [
+    "200 ms"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

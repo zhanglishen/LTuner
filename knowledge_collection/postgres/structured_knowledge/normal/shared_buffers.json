@@ -1,25 +1,41 @@
 {
   "name": "shared_buffers",
-  "category": "Resource Usage / Memory",
+  "category": "Resource/Memory",
   "context": "postmaster",
+  "type": "integer",
   "unit": "8kB",
-  "description": "Sets the number of 8kB shared memory buffers used by the PostgreSQL server for caching data pages.",
+  "constraints": {
+    "min": 16,
+    "max": 1073741823,
+    "hard_rule": "shared_buffers_kb < total_ram_kb * 0.6"
+  },
+  "default_formula": "min(total_ram_kb * 0.25, 8 * 1024 * 1024)",
+  "description": "Sets the amount of memory the database server uses for shared memory buffers. It is the primary component of PostgreSQL memory architecture.",
   "symptoms": [
-    "High disk I/O due to cache misses",
-    "OOM error when set too high on memory-constrained systems",
-    "Poor query performance under concurrent load",
-    "Shared memory allocation failure (ENOMEM) on startup"
+    "low buffer cache hit ratio",
+    "high read I/O from disk",
+    "high IO wait in CPU",
+    "query latency spikes during checkpoints"
   ],
   "dependencies": [
-    "shmmax",
-    "shmall",
+    "effective_cache_size",
+    "min_wal_size",
+    "max_wal_size"
+  ],
+  "related_knobs": [
+    "work_mem",
+    "maintenance_work_mem",
     "huge_pages"
   ],
-  "constraints": {
-    "hard_rule": "value * 8 < total_RAM_bytes * 0.4",
-    "min": "16",
-    "max": "1073741823"
-  },
-  "tuning_tips": "Set to 25–40% of total RAM on dedicated servers; reduce proportionally for shared or low-memory systems. Always benchmark, and ensure OS shared memory limits (shmmax/shmall) are configured accordingly.",
-  "default_formula": "RAM * 0.25"
+  "tuning_tips": "If you have a dedicated database server with 1GB or more of RAM, a reasonable starting value is 25% of the memory. Setting it significantly higher than 40% of RAM is usually unlikely to improve performance because PostgreSQL also relies on the OS cache.",
+  "official_snippet": "If you have a dedicated database server with 1GB or more of RAM, a reasonable starting value for shared_buffers is 25% of the memory in your system. (Source: PostgreSQL Documentation)",
+  "suggested_values": [
+    "1.75 GB"
+  ],
+  "min_value": null,
+  "max_value": "2.8 GB",
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

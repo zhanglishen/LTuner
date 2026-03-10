@@ -21,5 +21,14 @@
     "max": "1024"
   },
   "tuning_tips": "Set to the number of available CPU cores (or slightly less) to balance parallelism and CPU contention; always ensure it is >= max_parallel_maintenance_workers and >= max_parallel_workers_per_gather.",
-  "default_formula": "min(8, number_of_cpu_cores)"
+  "default_formula": "min(8, number_of_cpu_cores)",
+  "suggested_values": [
+    2
+  ],
+  "min_value": null,
+  "max_value": 2,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

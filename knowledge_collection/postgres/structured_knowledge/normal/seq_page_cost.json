@@ -22,5 +22,12 @@
     "max": "1.79769e+308"
   },
   "tuning_tips": "Increase seq_page_cost on fast storage (e.g., NVMe) to discourage unnecessary sequential scans; decrease it on slow storage or when RAM is abundant and OS cache is effective. Tune in tandem with random_page_cost to reflect actual I/O latency ratios.",
-  "default_formula": "1.0 (baseline); adjust relative to random_page_cost based on storage latency ratio (e.g., random_page_cost / seq_page_cost ≈ 4 for HDD, ≈ 1.1–1.5 for SSD)"
+  "default_formula": "1.0 (baseline); adjust relative to random_page_cost based on storage latency ratio (e.g., random_page_cost / seq_page_cost ≈ 4 for HDD, ≈ 1.1–1.5 for SSD)",
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

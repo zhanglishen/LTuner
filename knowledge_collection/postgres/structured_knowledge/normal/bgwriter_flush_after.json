@@ -22,5 +22,14 @@
     "max": "256"
   },
   "tuning_tips": "Increase cautiously on systems with fast storage (e.g., NVMe) to smooth I/O; reduce or set to 0 on slower storage or when OS-level write coalescing is preferred. Monitor 'pg_stat_bgwriter' for 'buffers_written' patterns and 'write' vs 'flush' timing.",
-  "default_formula": "64"
+  "default_formula": "64",
+  "suggested_values": [
+    "512 KB"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

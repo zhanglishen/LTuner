@@ -1,26 +1,41 @@
 {
   "name": "work_mem",
-  "category": "Resource",
+  "category": "Resource/Memory",
   "context": "user",
+  "type": "integer",
   "unit": "kB",
-  "description": "Maximum memory available for each internal sort operation and hash table before spilling to temporary disk files.",
+  "constraints": {
+    "min": 64,
+    "max": 2147483647,
+    "hard_rule": "work_mem * max_connections < total_ram_kb * 2.0"
+  },
+  "default_formula": "(total_ram_kb - shared_buffers_kb) / (max_connections * 3)",
+  "description": "Specifies the amount of memory to be used by internal sort operations and hash tables before writing to temporary disk files.",
   "symptoms": [
-    "High IO wait due to excessive temp file usage",
-    "OOM error from over-allocation across concurrent operations",
-    "Slow sorting or hashing on large datasets",
-    "Excessive temporary file creation and disk I/O",
-    "Memory pressure leading to OS-level swapping"
+    "high temporary file usage",
+    "slow sorting operations",
+    "disk spill during hash joins",
+    "complex query latency"
   ],
   "dependencies": [
     "max_connections",
-    "maintenance_work_mem",
-    "shared_buffers"
+    "hash_mem_multiplier"
   ],
-  "constraints": {
-    "hard_rule": "value * max_connections * 4 < RAM * 0.75",
-    "min": "64",
-    "max": "2147483647"
-  },
-  "tuning_tips": "Set per-workspace memory based on query complexity and concurrency: lower (1–4 MB) for OLTP with high connection count; higher (64–1024 MB) for OLAP with few concurrent heavy queries. Monitor temp file generation and memory usage to validate.",
-  "default_formula": "RAM / (max_connections * 4)"
+  "related_knobs": [
+    "shared_buffers",
+    "temp_buffers",
+    "maintenance_work_mem"
+  ],
+  "tuning_tips": "Increase this value for complex queries doing sorts or hash joins to perform operations in memory. However, be careful as this is a per-operation limit; complex queries may use multiples of this value.",
+  "official_snippet": "Note that for a complex query, several sort or hash operations might be running in parallel; each operation will be allowed to use as much memory as this value specifies before it starts to write data into temporary files.",
+  "suggested_values": [
+    "1 GB",
+    "256 MB"
+  ],
+  "min_value": null,
+  "max_value": "1 GB",
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

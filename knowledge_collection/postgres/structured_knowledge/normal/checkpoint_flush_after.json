@@ -22,5 +22,12 @@
     "max": "256"
   },
   "tuning_tips": "Increase cautiously (e.g., 64–128) on fast storage (NVMe/SSD) to smooth I/O; reduce or set to 0 on slow storage or when OS-level write coalescing is preferred. Monitor 'checkpoints_req' and 'buffers_checkpoint' metrics.",
-  "default_formula": "32"
+  "default_formula": "32",
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

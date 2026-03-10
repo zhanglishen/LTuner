@@ -20,5 +20,15 @@
     "hard_rule": null
   },
   "tuning_tips": "Disable 'jit' for OLTP workloads with short, simple queries; keep enabled for analytical or complex query workloads where JIT overhead is amortized. Monitor CPU and planning time before/after change.",
-  "default_formula": null
+  "default_formula": null,
+  "suggested_values": [
+    "off",
+    "on"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

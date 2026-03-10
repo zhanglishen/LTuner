@@ -22,5 +22,12 @@
     "max": "10000"
   },
   "tuning_tips": "Increase for faster vacuum on I/O-capable systems; decrease to reduce impact on concurrent workload. Tune in tandem with vacuum_cost_delay.",
-  "default_formula": "200"
+  "default_formula": "200",
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

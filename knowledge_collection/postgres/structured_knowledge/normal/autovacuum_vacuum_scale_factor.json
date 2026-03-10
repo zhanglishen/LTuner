@@ -21,5 +21,14 @@
     "max": "100"
   },
   "tuning_tips": "Lower this value (e.g., 0.05–0.1) for large, frequently updated tables to trigger vacuum sooner and prevent bloat; raise it (e.g., 0.3–0.5) for mostly read-only or small tables to reduce vacuum frequency.",
-  "default_formula": "0.2"
+  "default_formula": "0.2",
+  "suggested_values": [
+    0.2
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

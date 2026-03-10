@@ -7,12 +7,12 @@ from datetime import datetime
 
 def show():
     """显示首页"""
-    st.title("🏠 GPTuner 智能数据库调优系统")
+    st.title("🏠 LTuner 智能数据库调优系统")
     st.markdown("---")
     
     # 欢迎信息
     st.markdown("""
-    ### 👋 欢迎使用 GPTuner！
+    ### 👋 欢迎使用 LTuner！
     
     这是一个基于**大模型 + RAG** 的智能数据库调优系统，专为 DBA 设计。
     
@@ -115,7 +115,7 @@ def show():
     # 底部信息
     st.markdown("""
     <div style='text-align: center; color: #666; padding: 20px;'>
-        <p>GPTuner v1.0 | 基于大模型 + RAG 的智能调优系统</p>
+        <p>LTuner v1.0 | 基于大模型自省式反馈的智能调优系统</p>
         <p>Built with ❤️ for DBAs</p>
     </div>
     """, unsafe_allow_html=True)

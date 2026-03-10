@@ -18,5 +18,14 @@
     "max": "1048576"
   },
   "tuning_tips": "Increase only if you need full visibility into long dynamic or generated queries; prefer minimal sufficient size to avoid unnecessary memory overhead per connection.",
-  "default_formula": "1024"
+  "default_formula": "1024",
+  "suggested_values": [
+    "1024 B"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

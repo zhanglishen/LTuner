@@ -23,5 +23,14 @@
     "max": "1024"
   },
   "tuning_tips": "Start with floor(num_cpu_cores / 2); reduce to 1–2 for OLTP workloads to avoid overhead; increase cautiously for analytical workloads, never exceeding available CPU cores. Always validate against actual parallel plan usage and memory pressure.",
-  "default_formula": "num_cpu_cores / 2"
+  "default_formula": "num_cpu_cores / 2",
+  "suggested_values": [
+    1
+  ],
+  "min_value": null,
+  "max_value": 2,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

@@ -21,5 +21,12 @@
     "max": "100000"
   },
   "tuning_tips": "Set to a small nonzero value (e.g., 1000–10000 us) only under high concurrent commit workloads where group commit opportunities exist; avoid on latency-sensitive systems. Always pair with appropriate commit_siblings.",
-  "default_formula": "0"
+  "default_formula": "0",
+  "suggested_values": [],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

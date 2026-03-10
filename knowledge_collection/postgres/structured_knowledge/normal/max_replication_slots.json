@@ -21,5 +21,14 @@
     "max": "262143"
   },
   "tuning_tips": "Set this value to at least the total number of physical and logical standbys plus any planned future slots; increase only as needed since each slot consumes memory and WAL retention overhead.",
-  "default_formula": "max(10, number_of_standby_servers + number_of_logical_replication_consumers)"
+  "default_formula": "max(10, number_of_standby_servers + number_of_logical_replication_consumers)",
+  "suggested_values": [
+    5
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

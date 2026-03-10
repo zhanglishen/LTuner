@@ -22,5 +22,14 @@
     "max": "262143"
   },
   "tuning_tips": "Set to (number of CPU cores - 1) for write-heavy workloads; avoid exceeding available I/O and memory capacity per worker. Monitor bloat and pg_stat_progress_vacuum to validate effectiveness.",
-  "default_formula": "min(max(3, cpu_cores - 1), 262143)"
+  "default_formula": "min(max(3, cpu_cores - 1), 262143)",
+  "suggested_values": [
+    1
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

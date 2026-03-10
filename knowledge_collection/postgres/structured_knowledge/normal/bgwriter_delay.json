@@ -22,5 +22,16 @@
     "max": "10000"
   },
   "tuning_tips": "Reduce for high-write workloads to spread I/O more evenly; increase to reduce background writer CPU and I/O overhead on lightly loaded systems. Always use multiples of 10ms.",
-  "default_formula": "200"
+  "default_formula": "200",
+  "suggested_values": [
+    "10 ms",
+    "20 ms",
+    "50 ms"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

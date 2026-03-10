@@ -18,5 +18,16 @@
     "hard_rule": "value == 'on' implies system has sufficient huge pages configured (vm.nr_hugepages >= ceil(shared_buffers / hugepage_size))"
   },
   "tuning_tips": "Start with default 'try'; only set to 'on' after verifying adequate huge pages are reserved in the OS and validating performance gain; avoid 'on' in containerized or shared environments without guaranteed huge page availability.",
-  "default_formula": null
+  "default_formula": null,
+  "suggested_values": [
+    "off",
+    "on",
+    "try"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }

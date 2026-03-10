@@ -21,5 +21,14 @@
     "max": "256"
   },
   "tuning_tips": "Set to a small nonzero value (e.g., 32–128) to smooth I/O and reduce latency spikes; avoid 0 in write-heavy or durability-sensitive workloads. Monitor 'pg_stat_bgwriter' for 'buffers_backend_fsync' frequency.",
-  "default_formula": "RAM * 0.001 / 8192"
+  "default_formula": "RAM * 0.001 / 8192",
+  "suggested_values": [
+    "0 KB"
+  ],
+  "min_value": null,
+  "max_value": null,
+  "cpu": 2,
+  "ram": 7,
+  "disk_size": 39,
+  "disk_type": "HDD"
 }
