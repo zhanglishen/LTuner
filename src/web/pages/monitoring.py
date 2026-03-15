@@ -19,22 +19,20 @@ def initialize_monitor():
             from dbms.postgres import PgDBMS
             from monitoring.postgres_monitor import PostgreSQLMonitor
             from monitoring.workload_analyzer import WorkloadAnalyzer
-            
-            config_manager = st.session_state.config_manager
-            db_config = config_manager.get_database_config()
-            
-            # 创建临时配置
-            temp_config = ConfigParser()
-            temp_config['postgresql'] = {
-                'host': db_config['host'],
-                'port': str(db_config['port']),
-                'user': db_config['user'],
-                'passwd': db_config['password'],
-                'dbname': db_config['database']
-            }
-            
-            # 初始化数据库和监控器
-            dbms = PgDBMS.from_file(temp_config)
+
+            # 直接读取 postgres.ini 配置
+            pg_config = ConfigParser()
+            pg_config.read('/root/GPTuner/configs/postgres.ini')
+            sec = pg_config['DATABASE']
+            dbms = PgDBMS(
+                db=sec['db'],
+                user=sec['user'],
+                password=sec['password'],
+                restart_cmd=sec['restart_cmd'],
+                recover_script=sec['recover_script'],
+                knob_info_path=sec['knob_info_path'],
+            )
+            dbms._connect(sec['db'])
             monitor = PostgreSQLMonitor(dbms)
             analyzer = WorkloadAnalyzer()
             
@@ -178,7 +176,7 @@ def show():
         )
     
     with col2:
-        qps = metrics.get('qps', {}).get('qps', 0)
+        qps = metrics.get('qps', 0)  # qps 是直接数字
         st.metric(
             label="QPS（查询/秒）",
             value=f"{qps:.2f}",
@@ -186,26 +184,26 @@ def show():
         )
     
     with col3:
-        cache_hit = metrics.get('cache', {}).get('buffer_cache_hit_ratio', 0)
+        cache_hit = metrics.get('cache_hit_ratio', {}).get('buffer', 0)
         delta_color = "normal" if cache_hit >= 90 else "inverse"
+        cache_icon = "✓" if cache_hit >= 90 else "⚠"
         st.metric(
             label="缓存命中率",
             value=f"{cache_hit:.1f}%",
-            delta=f"{'✓' if cache_hit >= 90 else '⚠'}",
+            delta=cache_icon,
             delta_color=delta_color,
             help="Buffer Pool 缓存命中率"
         )
     
     with col4:
         connections = metrics.get('connections', {}).get('active', 0)
-        max_conn = metrics.get('connections', {}).get('max_connections', 100)
-        conn_pct = (connections / max_conn * 100) if max_conn > 0 else 0
+        total_conn = metrics.get('connections', {}).get('total', connections)
         st.metric(
             label="活跃连接数",
-            value=f"{connections}/{max_conn}",
-            delta=f"{conn_pct:.0f}%",
-            delta_color="inverse" if conn_pct > 80 else "normal",
-            help="当前活跃连接数 / 最大连接数"
+            value=f"{connections}",
+            delta=f"总连接: {total_conn}",
+            delta_color="normal",
+            help="当前活跃连接数"
         )
     
     st.markdown("---")
@@ -244,22 +242,17 @@ def show():
     
     with col2:
         # 资源压力指示器
-        pressure = analysis.get('pressure', {})
-        
+        resource_pressure = analysis.get('resource_pressure', {})
+        pressure_points = resource_pressure.get('pressure_points', [])
+        has_pressure_any = resource_pressure.get('has_pressure', False)
+
         st.markdown("#### ⚠️ 资源压力")
-        
-        pressure_items = [
-            ("CPU 压力", pressure.get('cpu_pressure', False)),
-            ("内存压力", pressure.get('memory_pressure', False)),
-            ("磁盘 I/O 压力", pressure.get('io_pressure', False)),
-            ("连接池压力", pressure.get('connection_pressure', False))
-        ]
-        
-        for name, has_pressure in pressure_items:
-            if has_pressure:
-                st.error(f"🔴 {name}")
-            else:
-                st.success(f"🟢 {name}")
+        if not has_pressure_any:
+            st.success("🟢 无明显压力")
+        else:
+            for pt in pressure_points:
+                icon = "🔴" if pt.get('severity') == 'high' else "🟡"
+                st.warning(f"{icon} {pt.get('message', pt.get('type', ''))}")
     
     st.markdown("---")
     
@@ -268,56 +261,36 @@ def show():
     
     with tab1:
         col1, col2 = st.columns(2)
-        
+
         with col1:
-            st.markdown("#### Buffer Pool")
-            cache_metrics = metrics.get('cache', {})
-            
+            st.markdown("#### Buffer Pool 命中率")
+            cache_metrics = metrics.get('cache_hit_ratio', {})
             df_cache = pd.DataFrame([
-                {"指标": "命中率", "值": f"{cache_metrics.get('buffer_cache_hit_ratio', 0):.2f}%"},
-                {"指标": "读取次数", "值": f"{cache_metrics.get('blocks_read', 0):,}"},
-                {"指标": "命中次数", "值": f"{cache_metrics.get('blocks_hit', 0):,}"}
+                {"指标": "Buffer 命中率", "值": f"{cache_metrics.get('buffer', 0):.2f}%"},
+                {"指标": "Index 命中率", "值": f"{cache_metrics.get('index', 0):.2f}%"},
             ])
             st.dataframe(df_cache, hide_index=True, use_container_width=True)
-        
+
         with col2:
-            st.markdown("#### Shared Buffers")
+            st.markdown("#### I/O 速率 (块/秒)")
             io_metrics = metrics.get('io', {})
-            
-            shared_read = io_metrics.get('shared_blocks_read', 0)
-            shared_written = io_metrics.get('shared_blocks_written', 0)
-            
             df_buffers = pd.DataFrame([
-                {"指标": "读取块数", "值": f"{shared_read:,}"},
-                {"指标": "写入块数", "值": f"{shared_written:,}"},
-                {"指标": "读写比", "值": f"{shared_read/(shared_written+1):.2f}"}
+                {"指标": "读取块/秒", "值": f"{io_metrics.get('blks_read_per_sec', 0):.2f}"},
+                {"指标": "命中块/秒", "值": f"{io_metrics.get('blks_hit_per_sec', 0):.2f}"},
+                {"指标": "行返回/秒", "值": f"{io_metrics.get('rows_returned_per_sec', 0):.2f}"},
             ])
             st.dataframe(df_buffers, hide_index=True, use_container_width=True)
     
     with tab2:
-        st.markdown("#### 💿 磁盘 I/O 统计")
-        
+        st.markdown("#### 💿 I/O 性能统计")
         io_metrics = metrics.get('io', {})
-        
         col1, col2, col3 = st.columns(3)
-        
         with col1:
-            st.metric(
-                "总读取块数",
-                f"{io_metrics.get('total_blocks_read', 0):,}"
-            )
-        
+            st.metric("读取块/秒", f"{io_metrics.get('blks_read_per_sec', 0):.2f}")
         with col2:
-            st.metric(
-                "总写入块数",
-                f"{io_metrics.get('total_blocks_written', 0):,}"
-            )
-        
+            st.metric("命中块/秒", f"{io_metrics.get('blks_hit_per_sec', 0):.2f}")
         with col3:
-            st.metric(
-                "临时文件",
-                f"{io_metrics.get('temp_files', 0):,}"
-            )
+            st.metric("行返回/秒", f"{io_metrics.get('rows_returned_per_sec', 0):.2f}")
     
     with tab3:
         col1, col2 = st.columns(2)
@@ -325,24 +298,20 @@ def show():
         with col1:
             st.markdown("#### 🔗 连接统计")
             conn_metrics = metrics.get('connections', {})
-            
             df_conn = pd.DataFrame([
                 {"状态": "活跃", "数量": conn_metrics.get('active', 0)},
                 {"状态": "空闲", "数量": conn_metrics.get('idle', 0)},
-                {"状态": "等待", "数量": conn_metrics.get('waiting', 0)},
-                {"状态": "最大", "数量": conn_metrics.get('max_connections', 0)}
+                {"状态": "总连接", "数量": conn_metrics.get('total', 0)},
             ])
             st.dataframe(df_conn, hide_index=True, use_container_width=True)
-        
+
         with col2:
             st.markdown("#### 🔒 锁统计")
             lock_metrics = metrics.get('locks', {})
-            
-            df_locks = pd.DataFrame([
-                {"类型": "排他锁", "数量": lock_metrics.get('exclusive_locks', 0)},
-                {"类型": "共享锁", "数量": lock_metrics.get('share_locks', 0)},
-                {"类型": "等待锁", "数量": lock_metrics.get('waiting_locks', 0)}
-            ])
+            total_locks = metrics.get('total_locks', 0)
+            rows = [{"类型": k, "数量": v} for k, v in lock_metrics.items()]
+            rows.append({"类型": "总锁数", "数量": total_locks})
+            df_locks = pd.DataFrame(rows)
             st.dataframe(df_locks, hide_index=True, use_container_width=True)
     
     with tab4:
@@ -354,8 +323,8 @@ def show():
             # 提取历史数据
             timestamps = [r['timestamp'] for r in history]
             tps_values = [r['metrics'].get('tps', {}).get('total_tps', 0) for r in history]
-            qps_values = [r['metrics'].get('qps', {}).get('qps', 0) for r in history]
-            cache_values = [r['metrics'].get('cache', {}).get('buffer_cache_hit_ratio', 0) for r in history]
+            qps_values = [r['metrics'].get('qps', 0) for r in history]  # qps 是直接数字
+            cache_values = [r['metrics'].get('cache_hit_ratio', {}).get('buffer', 0) for r in history]
             conn_values = [r['metrics'].get('connections', {}).get('active', 0) for r in history]
             
             # 创建图表

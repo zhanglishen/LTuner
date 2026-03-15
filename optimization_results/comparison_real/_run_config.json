@@ -1,0 +1,1 @@
+{"test": "tpch", "timeout": 180, "seed": 42, "bo_coarse_trials": 30, "bo_fine_trials": 40, "ltuner_max_iter": 20, "smac_trials": 70, "sessions": 1, "methods": ["gptuner", "ltuner"]}

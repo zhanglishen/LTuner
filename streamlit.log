@@ -6,3 +6,1309 @@ Collecting usage statistics. To deactivate, set browser.gatherUsageStats to Fals
 
   URL: http://0.0.0.0:8501
 
+2026-03-12 02:11:18.007 Examining the path of torch.classes raised: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
+2026-03-12 02:11:42.500 Uncaught app exception
+Traceback (most recent call last):
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 535, in _run_script
+    exec(code, module.__dict__)
+  File "/root/GPTuner/src/web/app.py", line 91, in <module>
+    experiment.show()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 30, in show
+    _show_results()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 291, in _show_results
+    st.image(img_path, use_container_width=True)
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/metrics_util.py", line 396, in wrapped_func
+    result = non_optional_func(*args, **kwargs)
+TypeError: image() got an unexpected keyword argument 'use_container_width'
+2026-03-12 02:11:42.730 Examining the path of torch.classes raised: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
+2026-03-12 02:22:56.142 Examining the path of torch.classes raised: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
+Trying to connect to benchbase with user admin
+Success to connect to benchbase with user admin
+Trying to connect to benchbase with user admin
+Success to connect to benchbase with user admin
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.02 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.01 秒）
+
+Trying to connect to benchbase with user admin
+Success to connect to benchbase with user admin
+Trying to connect to benchbase with user admin
+Success to connect to benchbase with user admin
+✓ 加载了 306 个知识单元
+构建知识库索引...
+✓ 症状索引: 727 个关键词
+✓ 分类索引: 24 个类别
+✓ 依赖图: 153 个节点
+RAG 检索器初始化成功，加载了 366 条文档
+  ✓ LADO 知识库: 154 个参数
+✅ RAG 知识库已加载
+✅ 参数验证器已初始化
+   系统内存: 7266 MB
+   CPU 核心数: 4
+
+✅ 冲突检测器已初始化
+   依赖规则: 4 条
+   冲突规则: 3 条
+
+✅ 安全引擎已初始化
+
+✅ 调优编排器已初始化
+   监控模块: AdaptiveMonitor
+   推荐模块: ParameterRecommender
+   配置管理: ConfigManager
+   安全检查: 已启用
+   RAG 增强: 已启用
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.01 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.01 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.01 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.01 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.01 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.01 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+2/7 采集连接统计...
+
+✅ 指标采集完成（耗时 0.15 秒）
+
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.14 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.01 秒）
+
+2026-03-12 02:26:52.204 Uncaught app exception
+Traceback (most recent call last):
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 535, in _run_script
+    exec(code, module.__dict__)
+  File "/root/GPTuner/src/web/app.py", line 91, in <module>
+    experiment.show()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 30, in show
+    _show_results()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 291, in _show_results
+    st.image(img_path, use_container_width=True)
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/metrics_util.py", line 396, in wrapped_func
+    result = non_optional_func(*args, **kwargs)
+TypeError: image() got an unexpected keyword argument 'use_container_width'
+2026-03-12 02:31:33.240 Examining the path of torch.classes raised: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
+2026-03-12 02:31:33.440 Examining the path of torch.classes raised: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
+2026-03-12 02:31:33.875 Examining the path of torch.classes raised: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
+2026-03-12 02:31:34.295 Examining the path of torch.classes raised: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
+2026-03-12 02:54:33.225 Uncaught app exception
+Traceback (most recent call last):
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 535, in _run_script
+    exec(code, module.__dict__)
+  File "/root/GPTuner/src/web/app.py", line 91, in <module>
+    experiment.show()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 30, in show
+    _show_results()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 291, in _show_results
+    st.image(img_path, use_container_width=True)
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/metrics_util.py", line 396, in wrapped_func
+    result = non_optional_func(*args, **kwargs)
+TypeError: image() got an unexpected keyword argument 'use_container_width'
+2026-03-12 02:54:41.537 Uncaught app exception
+Traceback (most recent call last):
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 535, in _run_script
+    exec(code, module.__dict__)
+  File "/root/GPTuner/src/web/app.py", line 91, in <module>
+    experiment.show()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 30, in show
+    _show_results()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 291, in _show_results
+    st.image(img_path, use_container_width=True)
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/metrics_util.py", line 396, in wrapped_func
+    result = non_optional_func(*args, **kwargs)
+TypeError: image() got an unexpected keyword argument 'use_container_width'
+2026-03-12 02:55:03.801 Uncaught app exception
+Traceback (most recent call last):
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 535, in _run_script
+    exec(code, module.__dict__)
+  File "/root/GPTuner/src/web/app.py", line 91, in <module>
+    experiment.show()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 30, in show
+    _show_results()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 291, in _show_results
+    st.image(img_path, use_container_width=True)
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/metrics_util.py", line 396, in wrapped_func
+    result = non_optional_func(*args, **kwargs)
+TypeError: image() got an unexpected keyword argument 'use_container_width'
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.01 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.01 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.01 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.01 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.01 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: SSL connection has been closed unexpectedly
+
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+2026-03-12 02:55:19.378 Uncaught app exception
+Traceback (most recent call last):
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 535, in _run_script
+    exec(code, module.__dict__)
+  File "/root/GPTuner/src/web/app.py", line 91, in <module>
+    experiment.show()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 30, in show
+    _show_results()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 291, in _show_results
+    st.image(img_path, use_container_width=True)
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/metrics_util.py", line 396, in wrapped_func
+    result = non_optional_func(*args, **kwargs)
+TypeError: image() got an unexpected keyword argument 'use_container_width'
+2026-03-12 02:55:28.160 Uncaught app exception
+Traceback (most recent call last):
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 535, in _run_script
+    exec(code, module.__dict__)
+  File "/root/GPTuner/src/web/app.py", line 91, in <module>
+    experiment.show()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 30, in show
+    _show_results()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 291, in _show_results
+    st.image(img_path, use_container_width=True)
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/metrics_util.py", line 396, in wrapped_func
+    result = non_optional_func(*args, **kwargs)
+TypeError: image() got an unexpected keyword argument 'use_container_width'
+2026-03-12 02:56:00.649 Examining the path of torch.classes raised: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
+2026-03-12 02:56:52.464 Examining the path of torch.classes raised: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+Trying to connect to benchbase with user admin
+Success to connect to benchbase with user admin
+Trying to connect to benchbase with user admin
+Success to connect to benchbase with user admin
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+2/7 采集连接统计...
+3/7 采集缓存命中率...
+4/7 采集 I/O 统计...
+5/7 采集慢查询...
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: column "tablename" does not exist
+LINE 3:             schemaname || '.' || tablename as table_name,
+                                         ^
+
+7/7 采集锁统计...
+
+✅ 指标采集完成（耗时 0.02 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: SSL connection has been closed unexpectedly
+
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+2026-03-12 02:57:13.406 Examining the path of torch.classes raised: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
+2026-03-12 02:57:28.054 Examining the path of torch.classes raised: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
+2026-03-12 02:57:28.434 Uncaught app exception
+Traceback (most recent call last):
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 535, in _run_script
+    exec(code, module.__dict__)
+  File "/root/GPTuner/src/web/app.py", line 91, in <module>
+    experiment.show()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 30, in show
+    _show_results()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 291, in _show_results
+    st.image(img_path, use_container_width=True)
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/metrics_util.py", line 396, in wrapped_func
+    result = non_optional_func(*args, **kwargs)
+TypeError: image() got an unexpected keyword argument 'use_container_width'
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+Trying to connect to benchbase with user admin
+Success to connect to benchbase with user admin
+Trying to connect to benchbase with user admin
+Success to connect to benchbase with user admin
+✓ 加载了 306 个知识单元
+构建知识库索引...
+✓ 症状索引: 727 个关键词
+✓ 分类索引: 24 个类别
+✓ 依赖图: 153 个节点
+RAG 检索器初始化成功，加载了 366 条文档
+  ✓ LADO 知识库: 154 个参数
+✅ RAG 知识库已加载
+✅ 参数验证器已初始化
+   系统内存: 7266 MB
+   CPU 核心数: 4
+
+✅ 冲突检测器已初始化
+   依赖规则: 4 条
+   冲突规则: 3 条
+
+✅ 安全引擎已初始化
+
+✅ 调优编排器已初始化
+   监控模块: AdaptiveMonitor
+   推荐模块: ParameterRecommender
+   配置管理: ConfigManager
+   安全检查: 已启用
+   RAG 增强: 已启用
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+2026-03-12 02:59:10.517 Uncaught app exception
+Traceback (most recent call last):
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 535, in _run_script
+    exec(code, module.__dict__)
+  File "/root/GPTuner/src/web/app.py", line 91, in <module>
+    experiment.show()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 30, in show
+    _show_results()
+  File "/root/GPTuner/src/web/pages/experiment.py", line 291, in _show_results
+    st.image(img_path, use_container_width=True)
+  File "/usr/local/python3.9/lib/python3.9/site-packages/streamlit/runtime/metrics_util.py", line 396, in wrapped_func
+    result = non_optional_func(*args, **kwargs)
+TypeError: image() got an unexpected keyword argument 'use_container_width'
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+查询执行失败: connection already closed
+7/7 采集锁统计...
+查询执行失败: connection already closed
+
+✅ 指标采集完成（耗时 0.00 秒）
+
+
+============================================================
+开始采集 PostgreSQL 性能指标（时间窗口: 120 分钟）
+============================================================
+
+1/7 采集基础性能指标...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+2/7 采集连接统计...
+查询执行失败: connection already closed
+3/7 采集缓存命中率...
+查询执行失败: connection already closed
+查询执行失败: connection already closed
+4/7 采集 I/O 统计...
+查询执行失败: connection already closed
+5/7 采集慢查询...
+查询执行失败: connection already closed
+警告：pg_stat_statements 扩展未安装，无法获取慢查询
+6/7 采集表统计...
+2026-03-12 03:01:44.188 Examining the path of torch.classes raised: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_

@@ -1,38 +1,54 @@
 """
 调优推荐页面
+- Tab 1: 原有的 GPTuner 式调优推荐与审批
+- Tab 2: LTuner 自省式独立调优
 """
 import streamlit as st
 import sys
+import os
+import subprocess
+import signal
+import time
+import glob
 sys.path.insert(0, '/root/GPTuner/src')
 import json
 from datetime import datetime
 import pandas as pd
+
+LTUNER_OUTPUT_DIR = '/root/GPTuner/optimization_results/postgres/ltuner'
+LTUNER_REPORT_PATH = os.path.join(LTUNER_OUTPUT_DIR, 'ltuner_workflow_report.json')
 
 
 def initialize_tuning_system():
     """初始化调优系统"""
     if 'tuning_initialized' not in st.session_state:
         try:
+            import os
+            # 禁止 HuggingFace 联网检查，直接使用本地缓存
+            os.environ['TRANSFORMERS_OFFLINE'] = '1'
+            os.environ['HF_HUB_OFFLINE'] = '1'
+
             from configparser import ConfigParser
             from dbms.postgres import PgDBMS
             from recommendation.tuning_orchestrator import TuningOrchestrator
-            
+
+            # 直接读取 postgres.ini 配置
+            pg_config = ConfigParser()
+            pg_config.read('/root/GPTuner/configs/postgres.ini')
+            sec = pg_config['DATABASE']
+            dbms = PgDBMS(
+                db=sec['db'],
+                user=sec['user'],
+                password=sec['password'],
+                restart_cmd=sec['restart_cmd'],
+                recover_script=sec['recover_script'],
+                knob_info_path=sec['knob_info_path'],
+            )
+            dbms._connect(sec['db'])
+
             config_manager = st.session_state.config_manager
-            db_config = config_manager.get_database_config()
             tuning_config = config_manager.get_tuning_config()
-            
-            # 创建临时配置
-            temp_config = ConfigParser()
-            temp_config['postgresql'] = {
-                'host': db_config['host'],
-                'port': str(db_config['port']),
-                'user': db_config['user'],
-                'passwd': db_config['password'],
-                'dbname': db_config['database']
-            }
-            
-            # 初始化数据库和调优编排器
-            dbms = PgDBMS.from_file(temp_config)
+
             orchestrator = TuningOrchestrator(
                 dbms,
                 use_rag=tuning_config['enable_rag'],
@@ -115,38 +131,40 @@ def apply_recommendations(backup_description=""):
 
 
 def show():
-    """显示调优推荐页面"""
-    st.title("🎯 调优推荐与审批")
+    """显示调优页面 (双 Tab: GPTuner推荐 + LTuner自省调优)"""
+    st.title("🎯 调优中心")
     st.markdown("---")
-    
+
+    tab1, tab2 = st.tabs(["📋 GPTuner 推荐调优", "🧠 LTuner 自省调优"])
+
+    with tab1:
+        _show_gptuner_tab()
+
+    with tab2:
+        _show_ltuner_tab()
+
+
+def _show_gptuner_tab():
+    """原有的 GPTuner 式调优推荐与审批"""
     config_manager = st.session_state.config_manager
     tuning_config = config_manager.get_tuning_config()
-    
+
     # 初始化调优系统
     if not st.session_state.get('tuning_initialized', False):
         with st.spinner("正在初始化调优系统..."):
             success, message = initialize_tuning_system()
             if not success:
                 st.error(message)
-                st.info("""
-                ### 请先配置数据库连接
-                
-                前往 [⚠️ 配置管理](#) 页面配置数据库连接信息并测试连接。
-                """)
+                st.info("### 请先配置数据库连接\n"
+                        "前往 ⚙️ 配置管理 页面配置数据库连接并测试连接。")
                 return
-    
-    # 获取当前步骤
+
     current_step = st.session_state.get('tuning_step', 'idle')
-    
-    # ========== 步骤指示器 ==========
+
+    # 步骤指示器
     steps = ["👁️ 待触发", "🔍 分析中", "📄 审查中", "✅ 已应用"]
-    step_index = {
-        'idle': 0,
-        'analyzing': 1,
-        'review': 2,
-        'applied': 3
-    }.get(current_step, 0)
-    
+    step_index = {'idle': 0, 'analyzing': 1, 'review': 2, 'applied': 3}.get(current_step, 0)
+
     cols = st.columns(4)
     for i, (col, step) in enumerate(zip(cols, steps)):
         with col:
@@ -156,22 +174,215 @@ def show():
                 st.info(step)
             else:
                 st.text(step)
-    
+
     st.markdown("---")
-    
-    # ========== 页面内容 ==========
-    
+
     if current_step == 'idle':
-        # 待触发状态
         show_trigger_panel(tuning_config)
-    
     elif current_step == 'review':
-        # 审查推荐
         show_review_panel(tuning_config)
-    
     elif current_step == 'applied':
-        # 应用结果
         show_applied_panel()
+
+
+# ================================================================
+# LTuner 自省调优 Tab
+# ================================================================
+def _show_ltuner_tab():
+    """LTuner 自省式反馈独立调优面板"""
+    st.markdown("### 🧠 LTuner 自省式反馈调优")
+    st.markdown("基于大模型的自省反馈循环，自动发现并优化数据库参数。")
+    st.markdown("---")
+
+    # 参数配置
+    col1, col2 = st.columns(2)
+    with col1:
+        lt_test = st.selectbox("Benchmark", ["tpch", "tpcc"], key="lt_test",
+                               help="TPC-H (OLAP) / TPC-C (OLTP)")
+        lt_max_iter = st.slider("最大迭代轮次", 5, 30, 15, key="lt_max_iter")
+        lt_top_k = st.slider("Top-K 参数数", 5, 30, 15, key="lt_top_k")
+    with col2:
+        lt_threshold = st.number_input("收敛阈值 (%)", 0.001, 0.1, 0.02,
+                                       format="%.3f", key="lt_threshold")
+        lt_scenario = st.selectbox("场景", ["auto", "OLTP", "OLAP", "HYBRID"],
+                                   key="lt_scenario")
+        lt_timeout = st.slider("每轮压测超时 (秒)", 60, 300, 180, step=30,
+                               key="lt_timeout")
+
+    st.markdown("---")
+
+    # 执行控制
+    lt_running = st.session_state.get('ltuner_running', False)
+    lt_pid = st.session_state.get('ltuner_pid', None)
+
+    col_start, col_stop, col_status = st.columns([1, 1, 2])
+    with col_start:
+        if st.button("🚀 开始 LTuner 调优", type="primary",
+                     use_container_width=True, disabled=lt_running):
+            _start_ltuner(lt_test, lt_max_iter, lt_top_k, lt_threshold,
+                          lt_scenario, lt_timeout)
+            st.rerun()
+
+    with col_stop:
+        if st.button("🛑 停止调优", use_container_width=True,
+                     disabled=not lt_running, key="lt_stop"):
+            _stop_ltuner()
+            st.rerun()
+
+    with col_status:
+        if lt_running:
+            if lt_pid and _is_alive(lt_pid):
+                st.warning(f"🔄 **LTuner 运行中** (PID: {lt_pid})")
+            else:
+                st.session_state['ltuner_running'] = False
+                st.session_state['ltuner_pid'] = None
+                st.success("✅ LTuner 调优已完成")
+        else:
+            st.info("⏳ 等待开始")
+
+    # 实时日志
+    if lt_running or os.path.exists(LTUNER_OUTPUT_DIR):
+        _show_ltuner_log()
+
+    st.markdown("---")
+
+    # 调优结果展示
+    _show_ltuner_results()
+
+
+def _start_ltuner(test, max_iter, top_k, threshold, scenario, timeout):
+    """后台启动 LTuner 调优"""
+    os.makedirs(LTUNER_OUTPUT_DIR, exist_ok=True)
+
+    cmd = [
+        sys.executable, '/root/GPTuner/src/run_ltuner.py',
+        'postgres', test, str(timeout),
+        '-max_iter', str(max_iter),
+        '-top_k', str(top_k),
+        '-threshold', str(threshold),
+    ]
+    if scenario != 'auto':
+        cmd += ['-scenario', scenario]
+
+    log_path = os.path.join(LTUNER_OUTPUT_DIR, 'ltuner_stdout.log')
+    with open(log_path, 'w') as f:
+        proc = subprocess.Popen(
+            cmd, stdout=f, stderr=subprocess.STDOUT,
+            cwd='/root/GPTuner', start_new_session=True)
+
+    st.session_state['ltuner_running'] = True
+    st.session_state['ltuner_pid'] = proc.pid
+
+
+def _stop_ltuner():
+    pid = st.session_state.get('ltuner_pid')
+    if pid:
+        try:
+            os.killpg(os.getpgid(pid), signal.SIGTERM)
+        except (ProcessLookupError, PermissionError):
+            pass
+    st.session_state['ltuner_running'] = False
+    st.session_state['ltuner_pid'] = None
+
+
+def _is_alive(pid):
+    if pid is None:
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except (ProcessLookupError, PermissionError):
+        return False
+
+
+def _show_ltuner_log():
+    log_path = os.path.join(LTUNER_OUTPUT_DIR, 'ltuner_stdout.log')
+    with st.expander("📋 LTuner 运行日志", expanded=False):
+        if os.path.exists(log_path):
+            try:
+                with open(log_path, 'r') as f:
+                    lines = f.readlines()
+                tail = lines[-80:] if len(lines) > 80 else lines
+                st.code(''.join(tail), language='text')
+            except IOError:
+                st.warning("无法读取日志")
+        else:
+            st.info("暂无日志")
+        if st.session_state.get('ltuner_running'):
+            st.button("🔄 刷新", key="lt_refresh", on_click=lambda: None)
+
+
+def _show_ltuner_results():
+    """展示 LTuner 调优结果"""
+    st.markdown("### 📊 LTuner 调优结果")
+
+    if not os.path.exists(LTUNER_REPORT_PATH):
+        st.info("暂无调优结果。运行 LTuner 调优后结果将在此展示。")
+        return
+
+    try:
+        with open(LTUNER_REPORT_PATH, 'r') as f:
+            report = json.load(f)
+    except (json.JSONDecodeError, IOError):
+        st.warning("无法解析调优报告")
+        return
+
+    status = report.get('status', 'unknown')
+    final = report.get('final_result', {})
+
+    if status == 'completed':
+        st.success("✅ 调优已完成")
+    elif status == 'failed':
+        st.error(f"❌ 调优失败: {report.get('error', '未知错误')}")
+    else:
+        st.warning(f"状态: {status}")
+
+    # Metric cards
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("性能提升", f"{final.get('improvement_percent', 0):.1f}%")
+    with col2:
+        st.metric("迭代轮次", final.get('total_iterations', 0))
+    with col3:
+        st.metric("配置失败次数", final.get('config_failures', 0))
+    with col4:
+        total_s = report.get('total_time_seconds', 0)
+        st.metric("总耗时", f"{total_s/60:.0f} min")
+
+    # Optimization history chart (if available)
+    opt = report.get('steps', {}).get('step4_optimize', {}).get('result', {})
+    history = opt.get('history', [])
+    if history:
+        st.markdown("#### 收敛曲线")
+        test = report.get('test', 'tpch')
+        is_lat = test in ['tpch']
+        if is_lat:
+            values = [h.get('latency', 0) for h in history]
+            metric_name = "延迟 (μs)"
+        else:
+            values = [h.get('throughput', 0) for h in history]
+            metric_name = "TPS"
+
+        import plotly.graph_objects as go
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(y=values, mode='lines+markers',
+                                 name=metric_name, line=dict(color='#FF5722')))
+        fig.update_layout(xaxis_title='迭代', yaxis_title=metric_name,
+                          height=350, margin=dict(l=40, r=20, t=30, b=40))
+        st.plotly_chart(fig, use_container_width=True)
+
+    # Best config
+    best_config = final.get('best_config', {})
+    if best_config:
+        with st.expander(f"🔧 最佳配置 ({len(best_config)} 个参数)"):
+            df = pd.DataFrame([
+                {'参数': k, '值': str(v)} for k, v in best_config.items()
+            ])
+            st.dataframe(df, hide_index=True, use_container_width=True)
+
+    # Full report
+    with st.expander("📄 完整报告 JSON"):
+        st.json(report)
 
 
 def show_trigger_panel(tuning_config):

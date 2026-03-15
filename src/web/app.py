@@ -30,7 +30,7 @@ st.sidebar.markdown("---")
 
 page = st.sidebar.radio(
     "导航",
-    ["🏠 首页", "⚙️ 配置管理", "📊 实时监控", "🎯 调优推荐", "📜 历史记录"],
+    ["🏠 首页", "⚙️ 配置管理", "📊 实时监控", "🎯 调优中心", "🧪 对比实验", "📜 历史记录"],
     index=0
 )
 
@@ -82,9 +82,13 @@ elif page == "📊 实时监控":
     from web.pages import monitoring
     monitoring.show()
 
-elif page == "🎯 调优推荐":
+elif page == "🎯 调优中心":
     from web.pages import tuning
     tuning.show()
+
+elif page == "🧪 对比实验":
+    from web.pages import experiment
+    experiment.show()
 
 elif page == "📜 历史记录":
     from web.pages import history

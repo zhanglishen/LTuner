@@ -165,10 +165,20 @@ class ParameterRecommender:
         return current_config
     
     def _get_system_memory(self) -> int:
-        """获取系统内存（MB）"""
-        # 简化实现，实际应该读取系统信息
-        # 可以通过 /proc/meminfo 或 psutil 获取
-        return 8192  # 默认 8GB
+        """获取系统实际内存（MB）"""
+        try:
+            import psutil
+            return int(psutil.virtual_memory().total / 1024 / 1024)
+        except ImportError:
+            pass
+        try:
+            with open('/proc/meminfo', 'r') as f:
+                for line in f:
+                    if line.startswith('MemTotal:'):
+                        return int(line.split()[1]) // 1024
+        except Exception:
+            pass
+        return 8192  # 兜底默认值
     
     def generate_rule_based_recommendations(self, 
                                            scenario: str, 

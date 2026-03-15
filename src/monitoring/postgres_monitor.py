@@ -23,13 +23,19 @@ class PostgreSQLMonitor:
         self.connection = dbms.connection
         
     def _execute_query(self, query: str) -> List[Tuple]:
-        """执行查询并返回结果"""
+        """执行查询并返回结果，连接断开时自动重连"""
         try:
             result, _ = self.dbms.get_sql_result(query)
             return result
         except Exception as e:
-            print(f"查询执行失败: {e}")
-            return []
+            print(f"查询执行失败: {e}，尝试重新连接...")
+            try:
+                self.dbms._connect(self.dbms.db)
+                result, _ = self.dbms.get_sql_result(query)
+                return result
+            except Exception as e2:
+                print(f"重连后查询仍失败: {e2}")
+                return []
     
     def get_qps(self, window_minutes: int = 5) -> float:
         """

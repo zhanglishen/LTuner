@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
 """
-真实对比实验: GPTuner (BO) vs LTuner (Self-Reflective)
-使用 TPC-H benchmark 在真实 PostgreSQL 上运行
-
-GPTuner: Coarse 15 轮 + Fine 20 轮 = 35 轮 BO
-LTuner: 10 轮自省反馈
+真实对比实验: GPTuner (BO) vs SMAC-only vs LTuner (Self-Reflective)
+支持 TPC-H / TPC-C, 多 session 重复, 日志流式输出
 
 用法:
     cd /root/GPTuner
-    python src/experiments/run_real_comparison.py
+    python src/experiments/run_real_comparison.py                      # 默认 tpch
+    python src/experiments/run_real_comparison.py --test tpcc          # tpcc
+    python src/experiments/run_real_comparison.py --sessions 3         # 3次重复
+    python src/experiments/run_real_comparison.py --methods gptuner ltuner smac  # 指定方法
 """
 import sys
 import os
 import json
 import time
+import shutil
+import argparse
 import traceback
+import logging
 from datetime import datetime
 
-# 确保工作目录正确
 os.chdir("/root/GPTuner")
 sys.path.insert(0, '/root/GPTuner/src')
 
@@ -30,448 +32,573 @@ from ltuner.ltuner_orchestrator import LTunerOrchestrator
 from experiments.visualizer import ExperimentVisualizer
 
 # ============================================================
-# 配置
+# 默认配置
 # ============================================================
-TEST = "tpch"
-TIMEOUT = 180
-SEED = 42
-BO_COARSE_TRIALS = 30
-BO_FINE_TRIALS = 40   # fine 阶段总试验数（含 coarse 导入）
-LTUNER_MAX_ITER = 20
-TARGET_KNOBS_PATH = "./knowledge_collection/postgres/target_knobs.txt"
-OUTPUT_DIR = "./optimization_results/comparison_real"
+DEFAULT_CONFIG = {
+    'test': 'tpch',
+    'timeout': 180,
+    'seed': 42,
+    'bo_coarse_trials': 30,
+    'bo_fine_trials': 40,
+    'ltuner_max_iter': 20,
+    'smac_trials': 70,
+    'sessions': 1,
+    'methods': ['gptuner', 'ltuner'],
+    'output_dir': './optimization_results/comparison_real',
+    'target_knobs_path': './knowledge_collection/postgres/target_knobs.txt',
+    'api_base': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    'api_key': 'sk-8695e5513e7d451d9fd1dd8fe155a2da',
+    'model': 'qwen-plus',
+}
 
-API_BASE = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-API_KEY = "sk-8695e5513e7d451d9fd1dd8fe155a2da"
-MODEL = "qwen-plus"
-
-# SMAC3 会自动加 smac3_output/ 前缀到 name 参数
-# 用 ../ 抵消该前缀，使最终路径落在 ./optimization_results/...
-# SMAC 输出: smac3_output/../optimization_results/... → ./optimization_results/...
-# fine_space.py 期望: ./optimization_results/postgres/coarse/{seed}/runhistory.json
 SMAC_COARSE_NAME = "../optimization_results/postgres/coarse/"
 SMAC_FINE_NAME = "../optimization_results/postgres/fine/"
-
-# 实际结果路径（SMAC 解析后）
 SMAC_COARSE_RESULT = "./optimization_results/postgres/coarse/"
 SMAC_FINE_RESULT = "./optimization_results/postgres/fine/"
 
+# ============================================================
+# 日志系统 - 支持 Web 实时读取
+# ============================================================
+_log_file = None
+_progress_file = None
 
+def setup_logging(output_dir):
+    global _log_file, _progress_file
+    os.makedirs(output_dir, exist_ok=True)
+    _log_file = os.path.join(output_dir, 'experiment.log')
+    _progress_file = os.path.join(output_dir, 'experiment_progress.json')
+    # 清空旧日志
+    with open(_log_file, 'w') as f:
+        f.write(f"[{datetime.now().isoformat()}] Experiment started\n")
+    _write_progress('idle', 0, 0, '')
+
+def log(msg):
+    ts = datetime.now().strftime('%H:%M:%S')
+    line = f"[{ts}] {msg}"
+    print(line)
+    if _log_file:
+        with open(_log_file, 'a') as f:
+            f.write(line + '\n')
+
+def _write_progress(status, current, total, method, extra=None):
+    """写入进度文件, Web 页面轮询读取"""
+    if not _progress_file:
+        return
+    data = {
+        'status': status,
+        'method': method,
+        'current_iter': current,
+        'total_iter': total,
+        'percent': round(current / max(total, 1) * 100, 1),
+        'timestamp': datetime.now().isoformat(),
+    }
+    if extra:
+        data.update(extra)
+    try:
+        with open(_progress_file, 'w') as f:
+            json.dump(data, f, ensure_ascii=False)
+    except:
+        pass
+
+
+# ============================================================
+# 数据库初始化
+# ============================================================
 def make_dbms():
-    """正确初始化 PgDBMS"""
     config = ConfigParser()
     config.read("./configs/postgres.ini")
     sec = config["DATABASE"]
     dbms = PgDBMS(
-        db=sec["db"],
-        user=sec["user"],
-        password=sec["password"],
-        restart_cmd=sec["restart_cmd"],
-        recover_script=sec["recover_script"],
+        db=sec["db"], user=sec["user"], password=sec["password"],
+        restart_cmd=sec["restart_cmd"], recover_script=sec["recover_script"],
         knob_info_path=sec["knob_info_path"],
     )
     dbms._connect("benchbase")
     return dbms
 
 
-def run_baseline():
-    """运行默认配置基准测试（独立的，不依赖 SMAC 初始化）"""
-    print(f"\n{'#'*60}")
-    print("# Phase 0: 默认配置基准测试")
-    print(f"{'#'*60}\n")
-
+# ============================================================
+# Phase 0: Baseline
+# ============================================================
+def run_baseline(cfg):
+    log("Phase 0: Running default config baseline...")
+    _write_progress('running', 0, 1, 'baseline')
     import threading
     dbms = make_dbms()
     dbms.reset_config()
     dbms.reconfigure()
-
-    runner = BenchbaseRunner(dbms=dbms, test=TEST, target_path="./optimization_results/temp_results")
+    runner = BenchbaseRunner(dbms=dbms, test=cfg['test'],
+                             target_path="./optimization_results/temp_results")
     runner.clear_summary_dir()
     t = threading.Thread(target=runner.run_benchmark)
     t.start()
-    t.join(timeout=TIMEOUT)
+    t.join(timeout=cfg['timeout'])
     if t.is_alive():
-        print("Baseline benchmark timeout, terminating...")
+        log("Baseline benchmark timeout")
         runner.process.terminate()
         time.sleep(2)
         dbms._disconnect()
         return 0.0, float('inf')
-
     throughput = runner.get_throughput()
     latency = runner.get_latency()
     dbms._disconnect()
-    print(f"\n[Baseline] TPS={throughput:.2f}, Latency={latency:.2f}")
+    log(f"Baseline: TPS={throughput:.2f}, Latency={latency:.2f}")
+    _write_progress('running', 1, 1, 'baseline',
+                    {'tps': throughput, 'latency': latency})
     return throughput, latency
 
 
-def run_gptuner_bo():
-    """运行 GPTuner BO（Coarse + Fine）"""
-    print(f"\n{'#'*60}")
-    print(f"# Phase 1: GPTuner BO (Coarse {BO_COARSE_TRIALS} + Fine {BO_FINE_TRIALS})")
-    print(f"{'#'*60}\n")
+# ============================================================
+# Phase 1: GPTuner BO (Coarse + Fine)
+# ============================================================
+def run_gptuner_bo(cfg):
+    seed = cfg['seed']
+    coarse_trials = cfg['bo_coarse_trials']
+    fine_trials = cfg['bo_fine_trials']
+    total = coarse_trials + fine_trials
+    log(f"GPTuner BO: Coarse {coarse_trials} + Fine {fine_trials} = {total} rounds")
+    _write_progress('running', 0, total, 'GPTuner')
 
-    # 创建标准目录
     os.makedirs("./optimization_results/postgres/log", exist_ok=True)
     os.makedirs("./optimization_results/postgres/coarse", exist_ok=True)
     os.makedirs("./optimization_results/postgres/fine", exist_ok=True)
 
-    # 清理旧的 SMAC 输出（避免 overwrite=False 导致继续旧实验）
-    import shutil
-    # 清理实际结果目录
-    coarse_seed_dir = f"{SMAC_COARSE_RESULT}{SEED}"
-    fine_seed_dir = f"{SMAC_FINE_RESULT}{SEED}"
-    # 也清理 smac3_output 目录下的残留
-    smac3_coarse = f"smac3_output/{SMAC_COARSE_RESULT}{SEED}" if not SMAC_COARSE_NAME.startswith("..") else None
-    for d in [coarse_seed_dir, fine_seed_dir]:
+    # Clean old SMAC outputs
+    for d in [f"{SMAC_COARSE_RESULT}{seed}", f"{SMAC_FINE_RESULT}{seed}",
+              f"smac3_output/optimization_results/postgres/coarse/{seed}",
+              f"smac3_output/optimization_results/postgres/fine/{seed}"]:
         if os.path.exists(d):
             shutil.rmtree(d)
-            print(f"[清理] 删除旧 SMAC 输出: {d}")
-    # 清理 smac3_output 中可能残留的旧路径
-    old_smac_coarse = f"smac3_output/optimization_results/postgres/coarse/{SEED}"
-    old_smac_fine = f"smac3_output/optimization_results/postgres/fine/{SEED}"
-    for d in [old_smac_coarse, old_smac_fine]:
-        if os.path.exists(d):
-            shutil.rmtree(d)
-            print(f"[清理] 删除旧 smac3_output 残留: {d}")
 
     start_time = time.time()
-    gptuner_iterations = []
 
-    # ─── Coarse Stage ───
-    print("\n--- GPTuner Coarse Stage ---")
+    # Coarse Stage
+    log("GPTuner: Starting Coarse Stage...")
     dbms1 = make_dbms()
     try:
-        coarse_stage = CoarseStage(
-            dbms=dbms1,
-            target_knobs_path=TARGET_KNOBS_PATH,
-            test=TEST,
-            timeout=TIMEOUT,
-            seed=SEED,
-        )
-        coarse_stage.optimize(
-            name=SMAC_COARSE_NAME,
-            trials_number=BO_COARSE_TRIALS,
-            initial_config_number=3
-        )
+        cs = CoarseStage(dbms=dbms1, target_knobs_path=cfg['target_knobs_path'],
+                         test=cfg['test'], timeout=cfg['timeout'], seed=seed)
+        cs.optimize(name=SMAC_COARSE_NAME, trials_number=coarse_trials,
+                    initial_config_number=3)
     except Exception as e:
-        print(f"[ERROR] Coarse stage failed: {e}")
+        log(f"Coarse stage error: {e}")
         traceback.print_exc()
     finally:
-        try:
-            dbms1._disconnect()
-        except:
-            pass
+        try: dbms1._disconnect()
+        except: pass
 
-    time.sleep(5)
+    _write_progress('running', coarse_trials, total, 'GPTuner')
+    time.sleep(3)
 
-    # ─── Fine Stage ───
-    print("\n--- GPTuner Fine Stage ---")
+    # Fine Stage
+    log("GPTuner: Starting Fine Stage...")
     dbms2 = make_dbms()
     try:
-        fine_stage = FineStage(
-            dbms=dbms2,
-            target_knobs_path=TARGET_KNOBS_PATH,
-            test=TEST,
-            timeout=TIMEOUT,
-            seed=SEED,
-        )
-        fine_stage.optimize(
-            name=SMAC_FINE_NAME,
-            trials_number=BO_FINE_TRIALS,
-        )
+        fs = FineStage(dbms=dbms2, target_knobs_path=cfg['target_knobs_path'],
+                       test=cfg['test'], timeout=cfg['timeout'], seed=seed)
+        fs.optimize(name=SMAC_FINE_NAME, trials_number=fine_trials)
     except Exception as e:
-        print(f"[ERROR] Fine stage failed: {e}")
+        log(f"Fine stage error: {e}")
         traceback.print_exc()
     finally:
-        try:
-            dbms2._disconnect()
-        except:
-            pass
+        try: dbms2._disconnect()
+        except: pass
 
-    total_time = time.time() - start_time
-
-    # 收集 BO 结果
-    result = collect_bo_results(total_time)
-    return result
+    elapsed = time.time() - start_time
+    _write_progress('running', total, total, 'GPTuner')
+    return collect_bo_results(elapsed, cfg)
 
 
-def collect_bo_results(total_time):
-    """从 SMAC runhistory + log 文件收集 BO 结果"""
+def collect_bo_results(total_time, cfg):
     result = {
-        'method': 'GPTuner (BO)',
-        'test': TEST,
+        'method': 'GPTuner (BO)', 'test': cfg['test'],
         'total_time_seconds': round(total_time, 1),
         'total_iterations': 0,
-        'iteration_latency': [],
-        'iteration_tps': [],
-        'iteration_times': [],
-        'best_latency': float('inf'),
-        'best_tps': 0,
+        'iteration_latency': [], 'iteration_tps': [],
+        'best_latency': float('inf'), 'best_tps': 0,
     }
-
-    # 解析 SMAC runhistory（coarse + fine）
-    for stage, path_prefix in [("coarse", SMAC_COARSE_RESULT), ("fine", SMAC_FINE_RESULT)]:
-        rh_path = os.path.join(path_prefix, str(SEED), "runhistory.json")
+    for stage, prefix in [("coarse", SMAC_COARSE_RESULT), ("fine", SMAC_FINE_RESULT)]:
+        rh_path = os.path.join(prefix, str(cfg['seed']), "runhistory.json")
         if not os.path.exists(rh_path):
-            print(f"[WARN] {stage} runhistory 不存在: {rh_path}")
             continue
-
         with open(rh_path, 'r') as f:
             rh = json.load(f)
-
-        data_entries = rh.get("data", [])
-        print(f"[INFO] {stage} runhistory: {len(data_entries)} 条记录")
-
-        for entry in data_entries:
-            # SMAC3 format: [config_id, instance_id, seed, budget, cost, time, status, additional_info]
+        for entry in rh.get("data", []):
             if len(entry) >= 5:
                 cost = entry[4]
-                # TPC-H: cost = latency (越小越好)
-                # TPC-C: cost = -throughput (SMAC 最小化)
-                if TEST in ['tpch']:
-                    latency = cost
-                    result['iteration_latency'].append(latency)
-                    if latency < result['best_latency']:
-                        result['best_latency'] = latency
+                if cfg['test'] in ['tpch']:
+                    result['iteration_latency'].append(cost)
+                    result['best_latency'] = min(result['best_latency'], cost)
                 else:
                     tps = -cost
                     result['iteration_tps'].append(tps)
-                    if tps > result['best_tps']:
-                        result['best_tps'] = tps
-
-    result['total_iterations'] = max(
-        len(result['iteration_latency']),
-        len(result['iteration_tps'])
-    )
-
-    # 解析 log 文件获取时间信息
-    log_file = f"./optimization_results/postgres/log/{SEED}_log.txt"
-    if os.path.exists(log_file):
-        with open(log_file, 'r') as f:
-            lines = f.readlines()
-        for line in lines[1:]:  # 跳过表头
-            parts = line.strip().split('\t')
-            if len(parts) >= 4:
-                try:
-                    elapsed = float(parts[3])
-                    result['iteration_times'].append(round(elapsed, 1))
-                except ValueError:
-                    pass
-        print(f"[INFO] 日志记录 {len(result['iteration_times'])} 轮时间数据")
-
+                    result['best_tps'] = max(result['best_tps'], tps)
+    result['total_iterations'] = max(len(result['iteration_latency']),
+                                     len(result['iteration_tps']))
+    log(f"GPTuner: {result['total_iterations']} iterations, time={total_time:.0f}s")
     return result
 
 
-def run_ltuner_real():
-    """运行 LTuner 真实实验"""
-    print(f"\n{'#'*60}")
-    print(f"# Phase 2: LTuner Self-Reflective ({LTUNER_MAX_ITER} 轮)")
-    print(f"{'#'*60}\n")
+# ============================================================
+# Phase 1b: SMAC-only (Pure BO without knowledge enhancement)
+# ============================================================
+def run_smac_only(cfg):
+    """Run pure SMAC BO without GPTuner knowledge enhancement"""
+    seed = cfg['seed']
+    trials = cfg.get('smac_trials', 70)
+    log(f"SMAC-only: {trials} rounds (pure BO, no knowledge)")
+    _write_progress('running', 0, trials, 'SMAC-only')
 
-    ltuner_output = os.path.join(OUTPUT_DIR, "ltuner")
+    smac_result_dir = "./optimization_results/postgres/smac_only/"
+    smac_name = "../optimization_results/postgres/smac_only/"
+    os.makedirs(smac_result_dir, exist_ok=True)
+
+    seed_dir = f"{smac_result_dir}{seed}"
+    if os.path.exists(seed_dir):
+        shutil.rmtree(seed_dir)
+    old_smac = f"smac3_output/optimization_results/postgres/smac_only/{seed}"
+    if os.path.exists(old_smac):
+        shutil.rmtree(old_smac)
+
+    start_time = time.time()
+    dbms = make_dbms()
+    try:
+        # Use CoarseStage (which uses default space without fine-tuning)
+        cs = CoarseStage(dbms=dbms, target_knobs_path=cfg['target_knobs_path'],
+                         test=cfg['test'], timeout=cfg['timeout'], seed=seed)
+        cs.optimize(name=smac_name, trials_number=trials, initial_config_number=5)
+    except Exception as e:
+        log(f"SMAC-only error: {e}")
+        traceback.print_exc()
+    finally:
+        try: dbms._disconnect()
+        except: pass
+
+    elapsed = time.time() - start_time
+    _write_progress('running', trials, trials, 'SMAC-only')
+
+    # Collect results
+    result = {
+        'method': 'SMAC-only (Pure BO)', 'test': cfg['test'],
+        'total_time_seconds': round(elapsed, 1), 'total_iterations': 0,
+        'iteration_latency': [], 'iteration_tps': [],
+        'best_latency': float('inf'), 'best_tps': 0,
+    }
+    rh_path = os.path.join(smac_result_dir, str(seed), "runhistory.json")
+    if os.path.exists(rh_path):
+        with open(rh_path, 'r') as f:
+            rh = json.load(f)
+        for entry in rh.get("data", []):
+            if len(entry) >= 5:
+                cost = entry[4]
+                if cfg['test'] in ['tpch']:
+                    result['iteration_latency'].append(cost)
+                    result['best_latency'] = min(result['best_latency'], cost)
+                else:
+                    tps = -cost
+                    result['iteration_tps'].append(tps)
+                    result['best_tps'] = max(result['best_tps'], tps)
+    result['total_iterations'] = max(len(result['iteration_latency']),
+                                     len(result['iteration_tps']))
+    log(f"SMAC-only: {result['total_iterations']} iterations, time={elapsed:.0f}s")
+    return result
+
+
+# ============================================================
+# Phase 2: LTuner Self-Reflective
+# ============================================================
+def run_ltuner_real(cfg):
+    log(f"LTuner: {cfg['ltuner_max_iter']} rounds self-reflective feedback")
+    _write_progress('running', 0, cfg['ltuner_max_iter'], 'LTuner')
+
+    ltuner_output = os.path.join(cfg['output_dir'], "ltuner")
     os.makedirs(ltuner_output, exist_ok=True)
 
     dbms = make_dbms()
-
     orchestrator = LTunerOrchestrator(
-        dbms=dbms,
-        test=TEST,
-        timeout=TIMEOUT,
-        api_base=API_BASE,
-        api_key=API_KEY,
-        model=MODEL,
-        max_iterations=LTUNER_MAX_ITER,
-        convergence_threshold=0.005,
-        top_k_knobs=15,
-        output_dir=ltuner_output,
+        dbms=dbms, test=cfg['test'], timeout=cfg['timeout'],
+        api_base=cfg['api_base'], api_key=cfg['api_key'], model=cfg['model'],
+        max_iterations=cfg['ltuner_max_iter'], convergence_threshold=0.005,
+        top_k_knobs=15, output_dir=ltuner_output,
     )
-
     workflow_report = orchestrator.run()
+    try: dbms._disconnect()
+    except: pass
 
-    try:
-        dbms._disconnect()
-    except:
-        pass
-
+    _write_progress('running', cfg['ltuner_max_iter'], cfg['ltuner_max_iter'], 'LTuner')
     return workflow_report
 
 
-def build_comparison_data(baseline_tps, baseline_latency, bo_result, ltuner_report):
-    """构建对比数据结构（兼容 visualizer）"""
+# ============================================================
+# Build comparison data (supports 2 or 3 methods)
+# ============================================================
+def _extract_method_data(method_name, cfg, baseline_tps, baseline_lat, raw_result):
+    """Extract unified data structure from method result"""
+    is_latency = cfg['test'] in ['tpch']
 
-    # ─── GPTuner 数据 ───
-    gptuner_data = {
-        'method': 'GPTuner (BO)',
-        'test': TEST,
-        'baseline_tps': baseline_tps,
-        'baseline_latency': baseline_latency,
-        'total_iterations': bo_result.get('total_iterations', 0),
-        'total_time_seconds': bo_result.get('total_time_seconds', 0),
-        'config_failures': 0,
-        'iteration_tps': bo_result.get('iteration_tps', []),
-        'iteration_latency': bo_result.get('iteration_latency', []),
-        'best_tps': bo_result.get('best_tps', 0),
-        'best_latency': bo_result.get('best_latency', float('inf')),
-        'improvement_percent': 0,
-    }
-    # 计算 GPTuner 提升
-    if TEST in ['tpch'] and gptuner_data['iteration_latency']:
-        best_lat = min(gptuner_data['iteration_latency'])
-        gptuner_data['best_latency'] = best_lat
-        if baseline_latency > 0:
-            gptuner_data['improvement_percent'] = round(
-                (baseline_latency - best_lat) / baseline_latency * 100, 2
-            )
-    elif gptuner_data['iteration_tps']:
-        best_tps = max(gptuner_data['iteration_tps'])
-        gptuner_data['best_tps'] = best_tps
+    if method_name == 'ltuner':
+        final = raw_result.get('final_result', {})
+        opt = raw_result.get('steps', {}).get('step4_optimize', {}).get('result', {})
+        it_tps = [r.get('throughput', 0) for r in opt.get('history', [])]
+        it_lat = [r.get('latency', 0) for r in opt.get('history', [])]
+        data = {
+            'method': 'LTuner (Self-Reflective)', 'test': cfg['test'],
+            'baseline_tps': baseline_tps, 'baseline_latency': baseline_lat,
+            'total_iterations': final.get('total_iterations', len(it_lat)),
+            'total_time_seconds': raw_result.get('total_time_seconds', 0),
+            'config_failures': final.get('config_failures', 0),
+            'iteration_tps': it_tps, 'iteration_latency': it_lat,
+            'best_tps': 0, 'best_latency': float('inf'), 'improvement_percent': 0,
+        }
+    else:
+        data = {
+            'method': raw_result.get('method', method_name),
+            'test': cfg['test'],
+            'baseline_tps': baseline_tps, 'baseline_latency': baseline_lat,
+            'total_iterations': raw_result.get('total_iterations', 0),
+            'total_time_seconds': raw_result.get('total_time_seconds', 0),
+            'config_failures': 0,
+            'iteration_tps': raw_result.get('iteration_tps', []),
+            'iteration_latency': raw_result.get('iteration_latency', []),
+            'best_tps': raw_result.get('best_tps', 0),
+            'best_latency': raw_result.get('best_latency', float('inf')),
+            'improvement_percent': 0,
+        }
+
+    # Calculate improvement
+    if is_latency and data['iteration_latency']:
+        valid = [x for x in data['iteration_latency'] if 0 < x < float('inf')]
+        if valid:
+            data['best_latency'] = min(valid)
+            if baseline_lat > 0:
+                data['improvement_percent'] = round(
+                    (baseline_lat - data['best_latency']) / baseline_lat * 100, 2)
+    elif data['iteration_tps']:
+        best = max(data['iteration_tps'])
+        data['best_tps'] = best
         if baseline_tps > 0:
-            gptuner_data['improvement_percent'] = round(
-                (best_tps - baseline_tps) / baseline_tps * 100, 2
-            )
+            data['improvement_percent'] = round(
+                (best - baseline_tps) / baseline_tps * 100, 2)
+    return data
 
-    # ─── LTuner 数据 ───
-    ltuner_final = ltuner_report.get('final_result', {})
-    ltuner_opt = ltuner_report.get('steps', {}).get('step4_optimize', {}).get('result', {})
 
-    lt_iteration_tps = []
-    lt_iteration_latency = []
-    for rec in ltuner_opt.get('history', []):
-        lt_iteration_tps.append(rec.get('throughput', 0))
-        lt_iteration_latency.append(rec.get('latency', 0))
+def build_comparison_data(cfg, baseline_tps, baseline_lat, results_dict):
+    """Build comparison data supporting gptuner/smac/ltuner"""
+    methods_data = {}
+    for name, raw in results_dict.items():
+        methods_data[name] = _extract_method_data(name, cfg, baseline_tps, baseline_lat, raw)
 
-    ltuner_data = {
-        'method': 'LTuner (Self-Reflective)',
-        'test': TEST,
-        'baseline_tps': baseline_tps,
-        'baseline_latency': baseline_latency,
-        'total_iterations': ltuner_final.get('total_iterations', 0),
-        'total_time_seconds': ltuner_report.get('total_time_seconds', 0),
-        'config_failures': ltuner_final.get('config_failures', 0),
-        'iteration_tps': lt_iteration_tps,
-        'iteration_latency': lt_iteration_latency,
-        'best_tps': 0,
-        'best_latency': float('inf'),
-        'improvement_percent': 0,  # 统一从 baseline 计算，不用自报告值
-    }
-    # 统一计算 LTuner 提升（与 GPTuner 一致）
-    if TEST in ['tpch'] and lt_iteration_latency:
-        valid_lats = [x for x in lt_iteration_latency if x > 0 and x < float('inf')]
-        if valid_lats:
-            best_lat = min(valid_lats)
-            ltuner_data['best_latency'] = best_lat
-            if baseline_latency > 0:
-                ltuner_data['improvement_percent'] = round(
-                    (baseline_latency - best_lat) / baseline_latency * 100, 2
-                )
-    elif lt_iteration_tps:
-        best_tps = max(lt_iteration_tps)
-        ltuner_data['best_tps'] = best_tps
-        if baseline_tps > 0:
-            ltuner_data['improvement_percent'] = round(
-                (best_tps - baseline_tps) / baseline_tps * 100, 2
-            )
-
-    # ─── 综合对比 ───
-    gp_impr = gptuner_data['improvement_percent']
-    lt_impr = ltuner_data['improvement_percent']
+    # Find winner
+    best_name, best_impr = '', -999
+    for name, d in methods_data.items():
+        if d['improvement_percent'] > best_impr:
+            best_impr = d['improvement_percent']
+            best_name = name
 
     comparison = {
         'experiment_time': datetime.now().isoformat(),
-        'test': TEST,
-        'mode': 'real',
-        'gptuner': gptuner_data,
-        'ltuner': ltuner_data,
-        'comparison_summary': {
-            'gptuner_improvement': gp_impr,
-            'ltuner_improvement': lt_impr,
-            'improvement_delta': round(lt_impr - gp_impr, 2),
-            'gptuner_iterations': gptuner_data['total_iterations'],
-            'ltuner_iterations': ltuner_data['total_iterations'],
-            'iteration_reduction': round(
-                (1 - ltuner_data['total_iterations'] / max(gptuner_data['total_iterations'], 1)) * 100, 1
-            ),
-            'gptuner_time_seconds': gptuner_data['total_time_seconds'],
-            'ltuner_time_seconds': ltuner_data['total_time_seconds'],
-            'time_reduction_percent': round(
-                (1 - ltuner_data['total_time_seconds'] / max(gptuner_data['total_time_seconds'], 1)) * 100, 1
-            ) if gptuner_data['total_time_seconds'] > 0 else 0,
-            'gptuner_failures': gptuner_data['config_failures'],
-            'ltuner_failures': ltuner_data['config_failures'],
-            'winner': 'LTuner' if lt_impr >= gp_impr else 'GPTuner'
-        }
+        'test': cfg['test'], 'mode': 'real',
+        'methods': list(methods_data.keys()),
+        'baseline_tps': baseline_tps,
+        'baseline_latency': baseline_lat,
     }
+
+    # Add each method's data
+    for name, d in methods_data.items():
+        comparison[name] = d
+
+    # Backward compat: if gptuner+ltuner present, add legacy keys
+    if 'gptuner' in methods_data and 'ltuner' in methods_data:
+        gp = methods_data['gptuner']
+        lt = methods_data['ltuner']
+        comparison['comparison_summary'] = {
+            'gptuner_improvement': gp['improvement_percent'],
+            'ltuner_improvement': lt['improvement_percent'],
+            'improvement_delta': round(lt['improvement_percent'] - gp['improvement_percent'], 2),
+            'gptuner_iterations': gp['total_iterations'],
+            'ltuner_iterations': lt['total_iterations'],
+            'iteration_reduction': round(
+                (1 - lt['total_iterations'] / max(gp['total_iterations'], 1)) * 100, 1),
+            'gptuner_time_seconds': gp['total_time_seconds'],
+            'ltuner_time_seconds': lt['total_time_seconds'],
+            'time_reduction_percent': round(
+                (1 - lt['total_time_seconds'] / max(gp['total_time_seconds'], 1)) * 100, 1
+            ) if gp['total_time_seconds'] > 0 else 0,
+            'gptuner_failures': gp['config_failures'],
+            'ltuner_failures': lt['config_failures'],
+            'winner': best_name,
+        }
+
+    # General summary for any method set
+    comparison['summary'] = {
+        'winner': best_name,
+        'winner_improvement': best_impr,
+        'methods_compared': len(methods_data),
+    }
+    for name, d in methods_data.items():
+        comparison['summary'][f'{name}_improvement'] = d['improvement_percent']
+        comparison['summary'][f'{name}_iterations'] = d['total_iterations']
+        comparison['summary'][f'{name}_time'] = d['total_time_seconds']
+
     return comparison
 
 
-def main():
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+# ============================================================
+# Main experiment runner
+# ============================================================
+def run_experiment(cfg=None):
+    """Main entry - can be called from CLI or Web"""
+    if cfg is None:
+        cfg = dict(DEFAULT_CONFIG)
+
+    output_dir = cfg['output_dir']
+    setup_logging(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
     os.makedirs("./optimization_results/temp_results", exist_ok=True)
     os.makedirs("./optimization_results/postgres/log", exist_ok=True)
 
-    print(f"\n{'='*60}")
-    print(f"真实对比实验: GPTuner (BO) vs LTuner (Self-Reflective)")
-    print(f"{'='*60}")
-    print(f"  Benchmark: {TEST}")
-    print(f"  GPTuner: Coarse {BO_COARSE_TRIALS} + Fine {BO_FINE_TRIALS} 轮")
-    print(f"  LTuner: {LTUNER_MAX_ITER} 轮自省反馈")
-    print(f"  输出目录: {OUTPUT_DIR}")
-    print(f"{'='*60}\n")
+    methods = cfg.get('methods', ['gptuner', 'ltuner'])
+    sessions = cfg.get('sessions', 1)
 
-    # ── Phase 0: Baseline ──
-    baseline_tps, baseline_latency = run_baseline()
-    print(f"\n[Baseline] TPS={baseline_tps:.2f}, Latency={baseline_latency:.2f}")
+    log(f"{'='*60}")
+    log(f"Experiment: {' vs '.join(m.upper() for m in methods)}")
+    log(f"Benchmark: {cfg['test'].upper()}, Sessions: {sessions}")
+    log(f"{'='*60}")
 
-    # ── Phase 1: GPTuner BO ──
-    bo_result = run_gptuner_bo()
+    all_session_results = []
 
-    # ── Phase 2: LTuner ──
-    ltuner_report = run_ltuner_real()
+    for session_idx in range(sessions):
+        if sessions > 1:
+            log(f"\n{'#'*60}")
+            log(f"# Session {session_idx + 1}/{sessions}")
+            log(f"{'#'*60}")
+            cfg['seed'] = 42 + session_idx  # different seed per session
 
-    # ── Phase 3: 生成对比图表 ──
-    print(f"\n{'#'*60}")
-    print("# Phase 3: 生成对比图表")
-    print(f"{'#'*60}\n")
+        # Phase 0: Baseline
+        baseline_tps, baseline_lat = run_baseline(cfg)
 
-    comparison = build_comparison_data(
-        baseline_tps, baseline_latency,
-        bo_result, ltuner_report
-    )
+        # Run each method
+        results_dict = {}
+        for method in methods:
+            log(f"\n--- Running {method.upper()} ---")
+            _write_progress('running', 0, 1, method)
 
-    # 保存原始数据
-    result_path = os.path.join(OUTPUT_DIR, 'comparison_real_tpch.json')
+            if method == 'gptuner':
+                results_dict['gptuner'] = run_gptuner_bo(cfg)
+            elif method == 'smac':
+                results_dict['smac'] = run_smac_only(cfg)
+            elif method == 'ltuner':
+                results_dict['ltuner'] = run_ltuner_real(cfg)
+            else:
+                log(f"Unknown method: {method}")
+
+        comparison = build_comparison_data(cfg, baseline_tps, baseline_lat, results_dict)
+        comparison['session'] = session_idx + 1
+        all_session_results.append(comparison)
+
+    # Save results
+    if sessions == 1:
+        final_result = all_session_results[0]
+    else:
+        final_result = _aggregate_sessions(all_session_results, cfg)
+
+    result_path = os.path.join(output_dir,
+                               f'comparison_real_{cfg["test"]}.json')
     with open(result_path, 'w') as f:
-        json.dump(comparison, f, indent=2, ensure_ascii=False, default=str)
-    print(f"[保存] 对比数据: {result_path}")
+        json.dump(final_result, f, indent=2, ensure_ascii=False, default=str)
+    log(f"Results saved: {result_path}")
 
-    # 生成可视化
+    # Generate charts
     try:
-        viz = ExperimentVisualizer(output_dir=OUTPUT_DIR)
-        charts = viz.visualize_all(comparison, prefix='real_tpch')
-        print(f"[图表] 已生成 {len(charts)} 张图表到 {OUTPUT_DIR}")
+        viz = ExperimentVisualizer(output_dir=output_dir)
+        charts = viz.visualize_all(final_result, prefix=f'real_{cfg["test"]}')
+        log(f"Generated {len(charts)} charts")
     except Exception as e:
-        print(f"[WARN] 图表生成失败: {e}")
+        log(f"Chart generation failed: {e}")
+        traceback.print_exc()
 
-    # 打印总结
-    summary = comparison['comparison_summary']
-    print(f"\n{'='*60}")
-    print(f"  真实对比实验结果")
-    print(f"{'='*60}")
-    print(f"  基准 TPS: {baseline_tps:.2f}")
-    print(f"  基准 Latency: {baseline_latency:.0f} μs")
-    print(f"  ────────────────────────────────────")
-    print(f"  GPTuner 提升: {summary['gptuner_improvement']:.1f}%")
-    print(f"  LTuner 提升:  {summary['ltuner_improvement']:.1f}%")
-    print(f"  ────────────────────────────────────")
-    print(f"  GPTuner 迭代: {summary['gptuner_iterations']} 轮")
-    print(f"  LTuner 迭代:  {summary['ltuner_iterations']} 轮")
-    print(f"  ────────────────────────────────────")
-    print(f"  GPTuner 耗时: {summary['gptuner_time_seconds']:.0f}s")
-    print(f"  LTuner 耗时:  {summary['ltuner_time_seconds']:.0f}s")
-    print(f"  ────────────────────────────────────")
-    print(f"  优胜方: {summary['winner']}")
-    print(f"  图表目录: {OUTPUT_DIR}")
-    print(f"{'='*60}\n")
+    # Print summary
+    _print_summary(final_result)
+    _write_progress('completed', 1, 1, 'done')
+    return final_result
+
+
+def _aggregate_sessions(sessions_list, cfg):
+    """Aggregate multiple sessions: compute median and quartiles"""
+    import numpy as np
+    methods = cfg.get('methods', ['gptuner', 'ltuner'])
+
+    # Use first session as template
+    agg = dict(sessions_list[0])
+    agg['sessions_count'] = len(sessions_list)
+    agg['all_sessions'] = sessions_list
+
+    for method in methods:
+        if method not in agg:
+            continue
+        improvements = []
+        for s in sessions_list:
+            if method in s:
+                improvements.append(s[method].get('improvement_percent', 0))
+        if improvements:
+            agg[method]['improvement_median'] = round(float(np.median(improvements)), 2)
+            agg[method]['improvement_q1'] = round(float(np.percentile(improvements, 25)), 2)
+            agg[method]['improvement_q3'] = round(float(np.percentile(improvements, 75)), 2)
+            agg[method]['improvement_all'] = improvements
+
+    return agg
+
+
+def _print_summary(result):
+    test = result.get('test', 'unknown')
+    log(f"\n{'='*60}")
+    log(f"Experiment Results - {test.upper()}")
+    log(f"{'='*60}")
+
+    for method_name in result.get('methods', ['gptuner', 'ltuner']):
+        d = result.get(method_name, {})
+        if not d:
+            continue
+        impr = d.get('improvement_percent', 0)
+        iters = d.get('total_iterations', 0)
+        t = d.get('total_time_seconds', 0)
+        log(f"  {d.get('method', method_name):30s} | {impr:6.1f}% | {iters:3d} iters | {t:.0f}s")
+
+    winner = result.get('summary', {}).get('winner', '?')
+    log(f"  Winner: {winner}")
+    log(f"{'='*60}\n")
+
+
+# ============================================================
+# CLI entry
+# ============================================================
+def main():
+    parser = argparse.ArgumentParser(description='GPTuner vs LTuner Comparison Experiment')
+    parser.add_argument('--test', default='tpch', choices=['tpch', 'tpcc'])
+    parser.add_argument('--timeout', type=int, default=180)
+    parser.add_argument('--sessions', type=int, default=1)
+    parser.add_argument('--methods', nargs='+', default=['gptuner', 'ltuner'],
+                        choices=['gptuner', 'ltuner', 'smac'])
+    parser.add_argument('--bo-coarse', type=int, default=30)
+    parser.add_argument('--bo-fine', type=int, default=40)
+    parser.add_argument('--ltuner-iter', type=int, default=20)
+    parser.add_argument('--smac-trials', type=int, default=70)
+    parser.add_argument('--seed', type=int, default=42)
+    args = parser.parse_args()
+
+    cfg = dict(DEFAULT_CONFIG)
+    cfg.update({
+        'test': args.test,
+        'timeout': args.timeout,
+        'sessions': args.sessions,
+        'methods': args.methods,
+        'bo_coarse_trials': args.bo_coarse,
+        'bo_fine_trials': args.bo_fine,
+        'ltuner_max_iter': args.ltuner_iter,
+        'smac_trials': args.smac_trials,
+        'seed': args.seed,
+    })
+    run_experiment(cfg)
 
 
 if __name__ == '__main__':

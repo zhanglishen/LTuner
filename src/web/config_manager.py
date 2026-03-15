@@ -120,34 +120,34 @@ class WebConfigManager:
                 self.config['database'][key] = value
         self.save_config()
     
-    def test_database_connection(self) -> tuple[bool, str]:
+    def test_database_connection(self) -> tuple:
         """测试数据库连接"""
         try:
             import sys
             sys.path.insert(0, '/root/GPTuner/src')
             from dbms.postgres import PgDBMS
             from configparser import ConfigParser
-            
-            # 创建临时配置
-            temp_config = ConfigParser()
-            temp_config['postgresql'] = {
-                'host': self.config['database']['host'],
-                'port': str(self.config['database']['port']),
-                'user': self.config['database']['user'],
-                'passwd': self.config['database']['password'],
-                'dbname': self.config['database']['database']
-            }
-            
-            # 尝试连接
-            dbms = PgDBMS.from_file(temp_config)
-            result = dbms.fetch_results("SELECT version();")
-            
-            if result and result[0]:
-                version = result[0][0]
-                return True, f"连接成功！\n{version}"
-            else:
-                return False, "连接失败：无法获取数据库版本"
-                
+            import psycopg2
+
+            # 使用 postgres.ini 获取完整配置（含 restart_cmd 等）
+            pg_config = ConfigParser()
+            pg_config.read('/root/GPTuner/configs/postgres.ini')
+            sec = pg_config['DATABASE']
+            # 允许 Web 界面覆盖 user/password/database
+            user = self.config['database'].get('user', sec['user'])
+            password = self.config['database'].get('password', sec['password'])
+            database = self.config['database'].get('database', sec['db'])
+
+            conn = psycopg2.connect(
+                database=database, user=user,
+                password=password, host='localhost'
+            )
+            cur = conn.cursor()
+            cur.execute('SELECT version();')
+            version = cur.fetchone()[0]
+            conn.close()
+            return True, f"连接成功！\n{version}"
+
         except Exception as e:
             return False, f"连接失败：{str(e)}"
     

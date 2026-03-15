@@ -64,8 +64,9 @@ def main():
     api_key = "sk-8695e5513e7d451d9fd1dd8fe155a2da"
     model = "qwen-plus"
 
-    # 结果输出目录
-    output_dir = f"../optimization_results/{args.db}/ltuner/"
+    # 结果输出目录（使用绝对路径，避免相对路径歧义）
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                              'optimization_results', args.db, 'ltuner')
     os.makedirs(output_dir, exist_ok=True)
 
     # 场景检测
