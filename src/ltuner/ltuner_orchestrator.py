@@ -22,6 +22,7 @@ from ltuner.causal_graph import CausalKnowledgeGraph
 from ltuner.moe_experts import MoEManager
 from ltuner.value_pruner import ValuePruner
 from ltuner.reflective_engine import ReflectiveEngine
+from ltuner.workload_semantic_analyzer import WorkloadSemanticAnalyzer
 
 
 class LTunerOrchestrator:
@@ -76,6 +77,12 @@ class LTunerOrchestrator:
             max_iterations=max_iterations,
             convergence_threshold=convergence_threshold,
             use_temperature_scheduling=use_temperature_scheduling
+        )
+
+        # 语义分析器（复用 reflective_engine 的 runner）
+        self.semantic_analyzer = WorkloadSemanticAnalyzer(
+            dbms=dbms,
+            runner=self.reflective_engine.runner
         )
 
         # 场景自动检测
@@ -215,10 +222,11 @@ class LTunerOrchestrator:
 
         # 尝试获取动态指标
         dynamic_desc = ""
+        monitor = None
         try:
-            from monitoring.postgres_monitor import PostgresMonitor
-            monitor = PostgresMonitor(self.dbms)
-            metrics = monitor.collect_all_metrics()
+            from monitoring.postgres_monitor import PostgreSQLMonitor
+            monitor = PostgreSQLMonitor(self.dbms)
+            metrics = monitor.collect_comprehensive_metrics()
             dynamic_desc = self.translator.translate_dynamic_metrics(metrics)
             print(dynamic_desc)
         except Exception as e:
@@ -228,6 +236,17 @@ class LTunerOrchestrator:
         env_context = static_desc
         if dynamic_desc:
             env_context += "\n\n" + dynamic_desc
+
+        # 初始诊断：EXPLAIN 执行计划分析 + 系统诊断
+        try:
+            initial_diag = self.semantic_analyzer.generate_initial_diagnostic(
+                monitor=monitor
+            )
+            if initial_diag:
+                env_context += "\n\n" + initial_diag
+                print(f"[语义分析] 已生成初始执行计划诊断（{len(initial_diag)} 字符）")
+        except Exception as e:
+            print(f"[语义分析] 初始诊断生成失败: {e}")
 
         return env_context
 
@@ -328,9 +347,9 @@ class LTunerOrchestrator:
     def _get_current_metrics(self) -> dict:
         """获取当前性能指标，采集失败则返回空字典"""
         try:
-            from monitoring.postgres_monitor import PostgresMonitor
-            monitor = PostgresMonitor(self.dbms)
-            return monitor.collect_all_metrics()
+            from monitoring.postgres_monitor import PostgreSQLMonitor
+            monitor = PostgreSQLMonitor(self.dbms)
+            return monitor.collect_comprehensive_metrics()
         except Exception:
             return {}
 

@@ -401,9 +401,101 @@ class PostgreSQLMonitor:
             'total_locks': sum(lock_stats.values())
         }
         
-        print(f"\n✅ 指标采集完成（耗时 {elapsed_time:.2f} 秒）\n")
-        
+        print(f"\n\u2705 \u6307\u6807\u91c7\u96c6\u5b8c\u6210\uff08\u8017\u65f6 {elapsed_time:.2f} \u79d2\uff09\n")
+            
         return metrics
+    
+    def get_wait_events(self) -> List[Dict]:
+        """
+        \u91c7\u96c6 pg_stat_activity \u7b49\u5f85\u4e8b\u4ef6\u5206\u5e03\uff0c\u7528\u4e8e\u8bca\u65ad\u6027\u80fd\u74f6\u9888\u7c7b\u578b\u3002
+        \u7b49\u5f85\u4e8b\u4ef6\u7c7b\u578b\u5305\u62ec: IO, LWLock, Lock, CPU \u7b49\u3002
+            
+        Returns:
+            [{'type': 'IO', 'event': 'DataFileRead', 'count': 5}, ...]
+        """
+        query = """
+        SELECT 
+            COALESCE(wait_event_type, 'CPU') as wait_type,
+            COALESCE(wait_event, 'Computing') as wait_event,
+            COUNT(*) as cnt
+        FROM pg_stat_activity
+        WHERE state = 'active'
+          AND pid != pg_backend_pid()
+        GROUP BY wait_event_type, wait_event
+        ORDER BY cnt DESC
+        LIMIT 10;
+        """
+        result = self._execute_query(query)
+            
+        events = []
+        for row in result:
+            wtype, wevent, cnt = row
+            events.append({
+                'type': str(wtype),
+                'event': str(wevent),
+                'count': int(cnt)
+            })
+        return events
+    
+    def get_temp_file_stats(self) -> Dict:
+        """
+        \u83b7\u53d6\u4e34\u65f6\u6587\u4ef6\u7edf\u8ba1\uff0c\u8bca\u65ad work_mem \u662f\u5426\u4e0d\u8db3\u3002
+        temp_files > 0 \u8868\u660e\u6392\u5e8f/Hash Join \u6ea2\u51fa\u5230\u78c1\u76d8\u3002
+            
+        Returns:
+            {'temp_files': 142, 'temp_bytes': 3355443200, 'temp_bytes_mb': 3200.0}
+        """
+        query = """
+        SELECT 
+            COALESCE(temp_files, 0) as temp_files,
+            COALESCE(temp_bytes, 0) as temp_bytes
+        FROM pg_stat_database
+        WHERE datname = current_database();
+        """
+        result = self._execute_query(query)
+            
+        if result and result[0]:
+            temp_files, temp_bytes = result[0]
+            return {
+                'temp_files': int(temp_files or 0),
+                'temp_bytes': int(temp_bytes or 0),
+                'temp_bytes_mb': round(float(temp_bytes or 0) / (1024 * 1024), 1)
+            }
+        return {'temp_files': 0, 'temp_bytes': 0, 'temp_bytes_mb': 0.0}
+    
+    def get_table_scan_patterns(self) -> List[Dict]:
+        """
+        \u83b7\u53d6\u5404\u8868\u7684\u987a\u5e8f\u626b\u63cf vs \u7d22\u5f15\u626b\u63cf\u6bd4\u7387\uff0c
+        \u5e2e\u52a9\u5224\u65ad effective_cache_size \u548c random_page_cost \u662f\u5426\u5408\u7406\u3002
+            
+        Returns:
+            [{'table': 'lineitem', 'seq_scans': 1200, 'idx_scans': 50, 'seq_pct': 96.0}, ...]
+        """
+        query = """
+        SELECT 
+            relname,
+            seq_scan,
+            COALESCE(idx_scan, 0) as idx_scan,
+            CASE WHEN (seq_scan + COALESCE(idx_scan, 0)) > 0
+                 THEN ROUND(100.0 * seq_scan / (seq_scan + COALESCE(idx_scan, 0)), 1)
+                 ELSE 0 END as seq_pct
+        FROM pg_stat_user_tables
+        WHERE seq_scan + COALESCE(idx_scan, 0) > 0
+        ORDER BY seq_scan DESC
+        LIMIT 10;
+        """
+        result = self._execute_query(query)
+            
+        patterns = []
+        for row in result:
+            relname, seq_scan, idx_scan, seq_pct = row
+            patterns.append({
+                'table': str(relname),
+                'seq_scans': int(seq_scan or 0),
+                'idx_scans': int(idx_scan or 0),
+                'seq_pct': float(seq_pct or 0)
+            })
+        return patterns
     
     def print_metrics_summary(self, metrics: Dict):
         """打印指标摘要"""

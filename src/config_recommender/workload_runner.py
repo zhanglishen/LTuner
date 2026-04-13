@@ -102,3 +102,34 @@ class BenchbaseRunner:
         except Exception as e:
             print(f'Exception for JSON: {e}')
         return average_latency
+
+    def get_per_query_latencies(self) -> dict:
+        """
+        解析 benchbase 逐查询结果 CSV，返回各查询平均延迟(ms)。
+        benchbase 会为每个 TPC-H 查询生成 *.results.Q{N}.csv 文件，
+        CSV 第一行是 header，后续行是每个时间窗口的统计数据。
+        我们找到第一个有效数据行（Average Latency > 0）作为该查询的延迟。
+
+        Returns:
+            {"Q1": 1380.5, "Q2": 456.3, ..., "Q22": 53.7}
+        """
+        latencies = {}
+        for i in range(1, 23):
+            pattern = os.path.join(self.target_path, f'*results.Q{i}.csv')
+            files = glob.glob(pattern)
+            if files:
+                files.sort(key=os.path.getmtime, reverse=True)
+                try:
+                    with open(files[0]) as f:
+                        lines = f.readlines()
+                    # 遍历数据行，找第一个有效延迟值
+                    for line in lines[1:]:
+                        vals = line.strip().split(',')
+                        if len(vals) > 2:
+                            avg_lat = float(vals[2])
+                            if avg_lat > 0:
+                                latencies[f'Q{i}'] = round(avg_lat, 2)
+                                break
+                except Exception as e:
+                    print(f"[WARNING] 解析 Q{i} 结果失败: {e}")
+        return latencies

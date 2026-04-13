@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from config_recommender.workload_runner import BenchbaseRunner
 from ltuner.feature_translator import FeatureTranslator
 from ltuner.causal_graph import CausalKnowledgeGraph
+from ltuner.workload_semantic_analyzer import WorkloadSemanticAnalyzer
 
 
 class IterationRecord:
@@ -100,11 +101,18 @@ class ReflectiveEngine:
         self.benchmark_latency = ['tpch']
         self.is_latency_mode = test in self.benchmark_latency
 
+        # 语义分析器
+        self.semantic_analyzer = WorkloadSemanticAnalyzer(
+            dbms=dbms, runner=self.runner
+        )
+
         # 记录
         self.history: List[IterationRecord] = []
         self.best_config: Dict[str, str] = {}
         self.best_performance: float = float('-inf')  # 初始化为负无穷，确保任何实际性能都能更新
         self.baseline_performance: float = 0.0
+        self.prev_query_latencies: Dict[str, float] = {}  # 上轮逐查询延迟
+        self.curr_query_latencies: Dict[str, float] = {}  # 当前轮逐查询延迟
 
         # 温度调度开关
         self.use_temperature_scheduling = use_temperature_scheduling
@@ -349,16 +357,21 @@ class ReflectiveEngine:
     def self_reflect(self, current_record: IterationRecord,
                       previous_records: List[IterationRecord],
                       env_context: str,
-                      causal_context: str) -> Tuple[str, str]:
+                      causal_context: str,
+                      query_delta_desc: str = "",
+                      diagnostic_context: str = "") -> Tuple[str, str]:
         """
         自省分析：LLM 分析性能变化的因果原因，生成文本梯度
         改进：将所有历史轮次的反思与梯度全部传入，供 LLM 全局分析参考。
+        语义增强：新增查询级性能变化对比和系统诊断信息，使 LLM 能精确定位参数变化对具体查询的影响。
 
         Args:
             current_record: 当前迭代记录
             previous_records: 历史迭代记录（全量）
             env_context: 环境上下文
             causal_context: 因果图谱上下文
+            query_delta_desc: 逐查询延迟变化的自然语言描述
+            diagnostic_context: 系统诊断信息（等待事件/临时文件/表扫描模式）
 
         Returns:
             (reflection_text, text_gradient)
@@ -407,13 +420,22 @@ class ReflectiveEngine:
             "1. 哪些历史轮次的梯度方向产生了正向效果，哪些导致了性能衰退\n"
             "2. 当前配置是否存在参数冲突或过度调整\n"
             "3. 建议应基于历史最优配置而非当前配置进行微调\n"
+            "4. 结合查询级性能变化和系统诊断信息，分析参数变化对具体查询的因果影响\n"
             "请用 JSON 格式返回，包含两个字段：\n"
-            '{"reflection": "深度分析思考过程（包含历史梯度回溯）", '
-            '"gradient": "具体调整方向建议（须指明基于哪个历史轮次配置出发）"}'
+            '{"reflection": "深度分析思考过程（包含历史梯度回溯和查询级因果分析）", '
+            '"gradient": "具体调整方向建议（须指明基于哪个历史轮次配置出发，以及对哪些查询的预期影响）"}'
         )
 
         delta_str = f"+{current_record.delta_performance:.1f}%" if current_record.delta_performance > 0 else f"{current_record.delta_performance:.1f}%"
         vs_baseline_now = (current_record.throughput - baseline) / abs(baseline) * 100 if baseline else 0
+
+        # 构建查询级变化和诊断信息段落
+        query_delta_section = ""
+        if query_delta_desc:
+            query_delta_section = f"\n{query_delta_desc}\n"
+        diagnostic_section = ""
+        if diagnostic_context:
+            diagnostic_section = f"\n{diagnostic_context}\n"
 
         user_prompt = f"""
 ## 当前状态
@@ -430,12 +452,14 @@ class ReflectiveEngine:
 {history_desc}
 
 {causal_context}
-
+{query_delta_section}
+{diagnostic_section}
 ## 分析任务
 1. 回溯历史梯度：哪些轮次的调整方向带来正向效果？哪些轮次梯度导致了衰退？
 2. 诊断当前轮次性能变化的根本原因（参数冲突/过调/正向协同）
-3. 识别当前主要性能瓶颈所在子系统
-4. 给出下一轮调整建议：须明确指出应以哪一历史轮次的配置为基础出发点
+3. 结合查询级性能变化，分析参数调整对哪些查询产生了正向/负向影响，及其因果机制
+4. 识别当前主要性能瓶颈所在子系统
+5. 给出下一轮调整建议：须明确指出应以哪一历史轮次的配置为基础出发点
 """
         try:
             response = self._call_llm(system_prompt, user_prompt, json_format=True)
@@ -454,7 +478,8 @@ class ReflectiveEngine:
                                current_config: Dict[str, str],
                                target_knobs: List[str],
                                value_ranges: dict,
-                               exploration_mode: bool = False) -> Dict[str, str]:
+                               exploration_mode: bool = False,
+                               diagnostic_context: str = "") -> Dict[str, str]:
         """
         基于文本梯度生成下一轮配置
 
@@ -464,6 +489,7 @@ class ReflectiveEngine:
             target_knobs: 目标参数
             value_ranges: 值域约束
             exploration_mode: True=主动探索模式（更大步长+新维度），False=精细微调模式
+            diagnostic_context: 系统诊断信息（执行计划+等待事件+内存画像）
         """
         range_lines = []
         for knob in target_knobs:
@@ -509,6 +535,11 @@ class ReflectiveEngine:
             )
             step_limit = "（微调模式下，单参数每轮变动幅度不超过 20%）"
 
+        # 构建诊断信息段落
+        diagnostic_prompt_section = ""
+        if diagnostic_context:
+            diagnostic_prompt_section = f"\n{diagnostic_context}\n"
+
         system_prompt = (
             "你是一位资深 PostgreSQL DBA。根据上一轮的自省分析和调整建议，"
             "生成新一轮的参数配置。必须严格遵守安全范围。"
@@ -531,13 +562,14 @@ class ReflectiveEngine:
 （注意：此配置可能来自历史最优轮次，请在此基础上按模式要求进行调整）
 {range_desc}
 {diversity_hint}
-
+{diagnostic_prompt_section}
 ## 任务
 基于自省建议，按当前模式调整配置。要求：
 1. 严格遵守安全范围
 2. 调整幅度符合当前模式要求 {step_limit}
 3. 返回所有参数的新值（即使未变更也要包含）
 4. 若梯度建议与历史正向轮次方向一致，则可适度加大步长
+5. 结合系统诊断信息，优先调整对瓶颈查询影响最大的参数
 """
         try:
             response = self._call_llm(system_prompt, user_prompt, json_format=True)
@@ -633,6 +665,15 @@ class ReflectiveEngine:
             throughput, latency = self._run_benchmark()
             current_performance = self._get_performance(throughput, latency)
 
+            # 采集逐查询延迟（用于语义分析）
+            self.prev_query_latencies = dict(self.curr_query_latencies)
+            try:
+                self.curr_query_latencies = self.runner.get_per_query_latencies()
+                if self.curr_query_latencies:
+                    print(f"  [语义分析] 采集到 {len(self.curr_query_latencies)} 条查询的逐查询延迟")
+            except Exception as e:
+                print(f"  [语义分析] 逐查询延迟采集失败: {e}")
+
             record.throughput = throughput
             record.latency = latency
 
@@ -686,9 +727,32 @@ class ReflectiveEngine:
                 continue
 
             # Step 4: 自省分析（传入全量历史，含每轮反思与梯度）
-            print("[Step 4] LLM 自省分析（全量历史轨迹）...")
+            print("[Step 4] LLM 自省分析（全量历史轨迹 + 语义分析）...")
+
+            # 生成查询级变化描述
+            query_delta_desc = ""
+            if self.prev_query_latencies and self.curr_query_latencies:
+                query_delta_desc = self.semantic_analyzer.analyze_query_deltas(
+                    self.prev_query_latencies, self.curr_query_latencies
+                )
+                if query_delta_desc:
+                    print(f"  [语义分析] 已生成查询级性能变化分析")
+
+            # 生成系统诊断信息
+            diagnostic_context = ""
+            try:
+                from monitoring.postgres_monitor import PostgreSQLMonitor
+                monitor = PostgreSQLMonitor(self.dbms)
+                diagnostic_context = self.semantic_analyzer.analyze_system_diagnostics(monitor)
+                if diagnostic_context:
+                    print(f"  [语义分析] 已生成系统诊断信息")
+            except Exception as e:
+                print(f"  [语义分析] 系统诊断采集失败: {e}")
+
             reflection, gradient = self.self_reflect(
-                record, self.history, env_context, causal_context
+                record, self.history, env_context, causal_context,
+                query_delta_desc=query_delta_desc,
+                diagnostic_context=diagnostic_context
             )
             record.reflection_text = reflection
             record.text_gradient = gradient
@@ -742,7 +806,8 @@ class ReflectiveEngine:
                         print("[Step 6] 基于文本梯度生成下一轮配置...")
                 current_config = self.generate_next_config(
                     gradient, base_config_for_next, target_knobs, value_ranges,
-                    exploration_mode=is_exploration_round
+                    exploration_mode=is_exploration_round,
+                    diagnostic_context=diagnostic_context
                 )
                 prev_performance = current_performance
 
