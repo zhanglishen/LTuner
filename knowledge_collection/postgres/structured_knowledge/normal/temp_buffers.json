@@ -17,9 +17,11 @@
   ],
   "constraints": {
     "hard_rule": "value * 8 <= session_memory_limit",
-    "min": "100",
-    "max": "1073741823"
+    "min": "8",
+    "max": "1024"
   },
   "tuning_tips": "Increase only for sessions expected to use large temporary tables; monitor per-session memory usage and avoid setting too high, as memory is not shared across sessions and each buffer consumes ~64 bytes overhead plus 8kB when used.",
-  "default_formula": "8 * 1024"
+  "default_formula": "8 * 1024",
+  "min_value": 8,
+  "max_value": 1024
 }

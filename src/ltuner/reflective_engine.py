@@ -66,7 +66,8 @@ class ReflectiveEngine:
     def __init__(self, dbms, test: str, timeout: int,
                  api_base: str, api_key: str, model: str = "qwen-plus",
                  max_iterations: int = 15,
-                 convergence_threshold: float = 0.02):
+                 convergence_threshold: float = 0.02,
+                 use_temperature_scheduling: bool = True):
         """
         Args:
             dbms: PgDBMS 实例
@@ -77,6 +78,7 @@ class ReflectiveEngine:
             model: LLM 模型名
             max_iterations: 最大迭代次数
             convergence_threshold: 收敛阈值（性能增量百分比）
+            use_temperature_scheduling: 是否启用动态温度调度/主动探索/收敛保护
         """
         self.dbms = dbms
         self.test = test
@@ -104,9 +106,39 @@ class ReflectiveEngine:
         self.best_performance: float = float('-inf')  # 初始化为负无穷，确保任何实际性能都能更新
         self.baseline_performance: float = 0.0
 
+        # 温度调度开关
+        self.use_temperature_scheduling = use_temperature_scheduling
+        # 动态温度调度（Task1）
+        self.current_temperature: float = 0.3
+        # 收敛保护标志（Task3）
+        self._last_chance_explored: bool = False
+
+    def _get_temperature(self, iteration: int) -> float:
+        """
+        动态 LLM 温度调度：
+          前30%  低温(0.2)  → 精准建立基础，快速达到高性能区间
+          中30%  高温(0.7)  → 主动探索，寻找更大突破
+          中后期 中温(0.4)  → 验证探索成果，稳定提升
+          最后20% 极低温(0.1)→ 锁定最优，精准收敛
+        若 use_temperature_scheduling=False，则固定返回 0.3
+        """
+        if not self.use_temperature_scheduling:
+            return 0.3
+        progress = iteration / max(self.max_iterations, 1)
+        if progress < 0.3:
+            return 0.2
+        elif progress < 0.6:
+            return 0.7
+        elif progress < 0.8:
+            return 0.4
+        else:
+            return 0.1
+
     def _call_llm(self, system_prompt: str, user_prompt: str,
-                   json_format: bool = False) -> str:
-        """调用 LLM"""
+                   json_format: bool = False, temperature: float = None) -> str:
+        """调用 LLM，支持动态 temperature"""
+        if temperature is None:
+            temperature = self.current_temperature
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
@@ -114,7 +146,7 @@ class ReflectiveEngine:
         kwargs = {
             "messages": messages,
             "model": self.model,
-            "temperature": 0.3,
+            "temperature": temperature,
         }
         if json_format:
             kwargs["response_format"] = {"type": "json_object"}
@@ -236,17 +268,20 @@ class ReflectiveEngine:
                                   causal_context: str,
                                   env_context: str) -> Dict[str, str]:
         """
-        LLM 生成初始配置方案
-
-        Args:
-            target_knobs: 目标参数列表
-            value_ranges: SPC 值域剪枝结果
-            causal_context: 因果图谱上下文
-            env_context: 环境特征上下文
-
-        Returns:
-            参数配置字典
+        LLM 生成初始配置方案（Task5：加入随机探索种子，增加不同实验的起点多样性）
         """
+        import random
+        # 随机选择一个初始调优侧重方向，使不同实验有不同的探索起点
+        exploration_hints = [
+            "请重点增大 checkpoint 相关参数（checkpoint_completion_target 调高至0.9, max_wal_size 调大）以减少 I/O 抖动",
+            "请重点优化 shared_buffers 和 effective_cache_size 的协同比例（shared_buffers=系统内存25%，effective_cache_size=75%）",
+            "请重点优化并发相关参数（max_worker_processes, max_parallel_workers, max_parallel_workers_per_gather）以利用多核",
+            "请重点优化 bgwriter 和 autovacuum 的后台 I/O 控制参数（bgwriter_lru_maxpages, autovacuum_vacuum_cost_delay）",
+            "请重点优化 WAL 和日志参数（wal_buffers, synchronous_commit, wal_compression）以减少写入延迟",
+        ]
+        exploration_seed = random.choice(exploration_hints)
+        print(f"[初始配置] 探索方向种子: {exploration_seed[:50]}...")
+
         # 构建值域约束描述
         range_desc_lines = []
         for knob in target_knobs:
@@ -282,16 +317,20 @@ class ReflectiveEngine:
 ## 参数值域安全边界
 {range_desc}
 
+## 本次调优侧重方向（随机探索种子）
+{exploration_seed}
+
 ## 任务
 请为上述 {len(target_knobs)} 个参数生成一组初始配置。
 要求：
 1. 所有值必须在安全边界内
 2. 考虑参数间的因果协同关系
-3. 优先优化对当前瓶颈影响最大的参数
+3. 优先优化对当前瓶颈影响最大的参数，并结合本次侧重方向
 4. 返回纯 JSON，key 为参数名，value 为参数值（字符串格式）
 """
         try:
-            response = self._call_llm(system_prompt, user_prompt, json_format=True)
+            response = self._call_llm(system_prompt, user_prompt, json_format=True,
+                                       temperature=0.5)  # 初始配置用中等温度，增加多样性
             config = json.loads(response)
             # 过滤只保留目标参数
             config = {k: str(v) for k, v in config.items() if k in target_knobs}
@@ -313,58 +352,90 @@ class ReflectiveEngine:
                       causal_context: str) -> Tuple[str, str]:
         """
         自省分析：LLM 分析性能变化的因果原因，生成文本梯度
+        改进：将所有历史轮次的反思与梯度全部传入，供 LLM 全局分析参考。
 
         Args:
             current_record: 当前迭代记录
-            previous_records: 历史迭代记录
+            previous_records: 历史迭代记录（全量）
             env_context: 环境上下文
             causal_context: 因果图谱上下文
 
         Returns:
             (reflection_text, text_gradient)
         """
-        # 构建历史概要
+        baseline = self.baseline_performance
+
+        # 构建全量历史详情（含每轮反思与梯度）
         history_lines = []
-        for rec in previous_records[-5:]:
+        for rec in previous_records:
             delta_str = f"+{rec.delta_performance:.1f}%" if rec.delta_performance > 0 else f"{rec.delta_performance:.1f}%"
-            history_lines.append(
-                f"  轮次 {rec.iteration}: TPS={rec.throughput:.1f}, "
-                f"Delta={delta_str}, {'改善' if rec.is_improvement else '未改善'}"
+            vs_baseline = (rec.throughput - baseline) / abs(baseline) * 100 if baseline else 0
+            line = (
+                f"  [轮次{rec.iteration:2d}] TPS={rec.throughput:8.1f} "
+                f"vs基线{vs_baseline:+.1f}%  逐轮Delta={delta_str}  "
+                f"{'✓改善' if rec.is_improvement else '✗未改善'}"
             )
+            if rec.reflection_text:
+                line += f"\n    └─反思: {rec.reflection_text[:120]}..."
+            if rec.text_gradient:
+                # text_gradient 可能是 list 或 str
+                grad_str = rec.text_gradient
+                if isinstance(grad_str, list):
+                    grad_str = "; ".join(str(g) for g in grad_str[:3])
+                line += f"\n    └─梯度: {str(grad_str)[:120]}..."
+            history_lines.append(line)
         history_desc = "\n".join(history_lines) if history_lines else "  无历史记录"
 
         # 当前配置
         config_lines = [f"  {k}: {v}" for k, v in current_record.config.items()]
         config_desc = "\n".join(config_lines)
 
+        # 历史最优信息
+        best_iter = None
+        if previous_records:
+            best_rec = max(previous_records, key=lambda r: r.throughput)
+            best_iter = best_rec.iteration
+            best_tps = best_rec.throughput
+        else:
+            best_tps = 0
+
         system_prompt = (
             "你是一位资深的 PostgreSQL DBA 和性能分析专家。"
-            "请分析本轮调优的性能变化原因，并给出下一步的调整方向建议。"
+            "请基于完整的历史调优轨迹（含每轮反思与文本梯度），"
+            "深度分析本轮性能变化原因，并给出下一步调整建议。\n"
+            "特别关注：\n"
+            "1. 哪些历史轮次的梯度方向产生了正向效果，哪些导致了性能衰退\n"
+            "2. 当前配置是否存在参数冲突或过度调整\n"
+            "3. 建议应基于历史最优配置而非当前配置进行微调\n"
             "请用 JSON 格式返回，包含两个字段：\n"
-            '{"reflection": "你的分析思考过程", "gradient": "具体的调整方向建议"}'
+            '{"reflection": "深度分析思考过程（包含历史梯度回溯）", '
+            '"gradient": "具体调整方向建议（须指明基于哪个历史轮次配置出发）"}'
         )
 
         delta_str = f"+{current_record.delta_performance:.1f}%" if current_record.delta_performance > 0 else f"{current_record.delta_performance:.1f}%"
+        vs_baseline_now = (current_record.throughput - baseline) / abs(baseline) * 100 if baseline else 0
 
         user_prompt = f"""
 ## 当前状态
-- 迭代轮次: {current_record.iteration}
-- 当前 TPS: {current_record.throughput:.2f}
-- 性能变化: {delta_str}
-- 是否改善: {'是' if current_record.is_improvement else '否'}
+- 迭代轮次: {current_record.iteration}/{self.max_iterations}
+- 基线 TPS: {baseline:.2f}
+- 当前 TPS: {current_record.throughput:.2f}（vs基线 {vs_baseline_now:+.1f}%）
+- 逐轮 Delta: {delta_str}
+- 历史最优: 轮次{best_iter} TPS={best_tps:.1f}（vs基线 {(best_tps-baseline)/abs(baseline)*100:+.1f}%）
 
 ## 当前配置
 {config_desc}
 
-## 历史记录
+## 完整历史调优轨迹（含每轮反思与梯度）
 {history_desc}
 
 {causal_context}
 
-## 任务
-1. 分析本轮性能变化的根本原因（基于参数因果关系）
-2. 判断当前主要性能瓶颈已转移到哪个子系统
-3. 给出下一轮应该调整的参数方向和幅度建议
+## 分析任务
+1. 回溯历史梯度：哪些轮次的调整方向带来正向效果？哪些轮次梯度导致了衰退？
+2. 诊断当前轮次性能变化的根本原因（参数冲突/过调/正向协同）
+3. 识别当前主要性能瓶颈所在子系统
+4. 给出下一轮调整建议：须明确指出应以哪一历史轮次的配置为基础出发点
 """
         try:
             response = self._call_llm(system_prompt, user_prompt, json_format=True)
@@ -382,18 +453,17 @@ class ReflectiveEngine:
     def generate_next_config(self, text_gradient: str,
                                current_config: Dict[str, str],
                                target_knobs: List[str],
-                               value_ranges: dict) -> Dict[str, str]:
+                               value_ranges: dict,
+                               exploration_mode: bool = False) -> Dict[str, str]:
         """
         基于文本梯度生成下一轮配置
 
         Args:
             text_gradient: 文本梯度（调整方向建议）
-            current_config: 当前配置
+            current_config: 当前配置（可能是历史最优）
             target_knobs: 目标参数
             value_ranges: 值域约束
-
-        Returns:
-            新配置
+            exploration_mode: True=主动探索模式（更大步长+新维度），False=精细微调模式
         """
         range_lines = []
         for knob in target_knobs:
@@ -405,9 +475,44 @@ class ReflectiveEngine:
                 )
         range_desc = "\n".join(range_lines)
 
+        # Task4：配置多样性保护——检测近5轮中单调不变的参数
+        monotone_knobs = []
+        if len(self.history) >= 3:
+            for knob in target_knobs:
+                recent_vals = [r.config.get(knob) for r in self.history[-5:]
+                               if r.config.get(knob)]
+                if len(recent_vals) >= 3 and len(set(recent_vals)) == 1:
+                    monotone_knobs.append(knob)
+        if monotone_knobs:
+            diversity_hint = (
+                f"\n[多样性约束] 以下参数在近5轮中完全未变化，本轮必须调整其中至少2个："
+                f"\n{', '.join(monotone_knobs[:8])}"
+            )
+        else:
+            diversity_hint = ""
+
+        if exploration_mode:
+            # 主动探索模式：更大步长，要求调整未充分探索的维度
+            mode_instruction = (
+                "当前处于【主动探索阶段】。任务是跳出当前局部最优区域，"
+                "尝试调整上几轮未变动或变化较少的参数维度"
+                "（如 checkpoint_completion_target, max_wal_size, bgwriter_lru_maxpages, "
+                "autovacuum_vacuum_cost_delay, random_page_cost 等）。\n"
+                "每个参数调整幅度可达当前值的 30-50%，目标是找到新的性能峰值区域。\n"
+                "不要拘泥于上一轮的微调方向，大胆探索！"
+            )
+            step_limit = "（探索模式下，单参数调整幅度可达 30-50%）"
+        else:
+            mode_instruction = (
+                "当前处于【精细微调阶段】。在当前基础配置上按梯度建议进行保守微调，"
+                "逐步逼近最优解。"
+            )
+            step_limit = "（微调模式下，单参数每轮变动幅度不超过 20%）"
+
         system_prompt = (
             "你是一位资深 PostgreSQL DBA。根据上一轮的自省分析和调整建议，"
             "生成新一轮的参数配置。必须严格遵守安全范围。"
+            "注意：当前基础配置可能来自历史最优轮次（非上一轮），请以此为基础做调整。"
             "以 JSON 格式返回，格式为 {\"parameter_name\": \"value\"}。\n"
             "单位规则：内存类参数(shared_buffers, work_mem, effective_cache_size, "
             "maintenance_work_mem, wal_buffers, temp_buffers, max_wal_size, "
@@ -416,17 +521,23 @@ class ReflectiveEngine:
         )
 
         user_prompt = f"""
-## 上一轮自省建议（文本梯度）
+## 自省分析建议（文本梯度）
 {text_gradient}
 
-## 当前参数值和安全范围
+## 当前调优模式
+{mode_instruction}
+
+## 当前基础配置和安全范围
+（注意：此配置可能来自历史最优轮次，请在此基础上按模式要求进行调整）
 {range_desc}
+{diversity_hint}
 
 ## 任务
-基于自省建议，调整参数值。要求：
+基于自省建议，按当前模式调整配置。要求：
 1. 严格遵守安全范围
-2. 调整幅度合理，避免剧烈变动
+2. 调整幅度符合当前模式要求 {step_limit}
 3. 返回所有参数的新值（即使未变更也要包含）
+4. 若梯度建议与历史正向轮次方向一致，则可适度加大步长
 """
         try:
             response = self._call_llm(system_prompt, user_prompt, json_format=True)
@@ -438,6 +549,9 @@ class ReflectiveEngine:
                 if knob not in new_config:
                     new_config[knob] = current_config.get(knob, '')
 
+            mode_tag = "[探索]" if exploration_mode else "[微调]"
+            print(f"  {mode_tag} 生成新配置：{len(new_config)} 个参数"
+                  + (f"，多样性保护参数: {monotone_knobs[:4]}" if monotone_knobs else ""))
             return new_config
         except Exception as e:
             print(f"[ReflectiveEngine] 生成新配置失败: {e}")
@@ -481,11 +595,24 @@ class ReflectiveEngine:
         )
 
         no_improvement_count = 0
+        # 回滚策略：跌破基线阈值时触发（跌超50%则立即回滚）
+        ROLLBACK_THRESHOLD = 0.50  # 跌破基线50%触发回滚
+        CRASH_THRESHOLD = 0.10     # TPS低于基线10%视为崩溃，强制终止方向
+        rollback_count = 0
+        EXPLORATION_INTERVAL = 4   # 每4轮触发一次主动探索（Task2）
+        self._last_chance_explored = False  # 收敛保护标志重置（Task3）
+        # 无温度调度模式下禁用探索与收敛保护
+        enable_exploration = self.use_temperature_scheduling
 
         for iteration in range(1, self.max_iterations + 1):
             print(f"\n{'─'*60}")
             print(f"迭代轮次 {iteration}/{self.max_iterations}")
             print(f"{'─'*60}")
+
+            # Task1：动态更新 LLM 温度
+            self.current_temperature = self._get_temperature(iteration)
+            print(f"  [温度调度] LLM temperature={self.current_temperature:.1f}"
+                  f"  (进度 {iteration/self.max_iterations*100:.0f}%)")
 
             record = IterationRecord(iteration)
             record.config = dict(current_config)
@@ -495,7 +622,11 @@ class ReflectiveEngine:
             apply_success = self._apply_config(current_config)
             if not apply_success:
                 record.config_failures += 1
-                print(f"[WARNING] 配置应用失败，跳过本轮")
+                print(f"[WARNING] 配置应用失败，触发回滚到历史最优配置")
+                if self.best_config:
+                    current_config = dict(self.best_config)
+                    rollback_count += 1
+                    print(f"[ROLLBACK] 已回滚到历史最优配置（第{rollback_count}次回滚）")
                 self.history.append(record)
                 continue
 
@@ -512,36 +643,80 @@ class ReflectiveEngine:
                 )
             record.is_improvement = current_performance > prev_performance
 
+            # 计算 vs 基线的百分比
+            vs_baseline_pct = (
+                (current_performance - self.baseline_performance) / abs(self.baseline_performance)
+                if self.baseline_performance != 0 else 0
+            )
+
             print(f"  TPS: {throughput:.2f}, Latency: {latency:.2f}")
-            print(f"  Delta: {record.delta_performance:+.1f}%, "
-                  f"{'改善' if record.is_improvement else '未改善'}")
+            print(f"  vs基线: {vs_baseline_pct:+.1f}%  逐轮Delta: {record.delta_performance:+.1f}%  "
+                  f"{'✓改善' if record.is_improvement else '✗未改善'}")
 
             # 更新最佳
             if current_performance > self.best_performance:
                 self.best_performance = current_performance
                 self.best_config = dict(current_config)
+                print(f"  [NEW BEST] TPS={throughput:.2f} 已更新历史最优")
 
-            # Step 4: 自省分析
-            print("[Step 4] LLM 自省分析...")
+            # ===== 回滚策略 =====
+            rollback_triggered = False
+            if vs_baseline_pct < -ROLLBACK_THRESHOLD * 100:
+                # 跌破基线50%：严重崩溃，立即回滚并跳过本轮梯度
+                print(f"\n[ROLLBACK] 严重崩溃！TPS vs基线 {vs_baseline_pct:.1f}% < -{ROLLBACK_THRESHOLD*100:.0f}%")
+                print(f"[ROLLBACK] 回滚到历史最优配置（TPS={self.best_performance:.1f}）")
+                if self.best_config:
+                    current_config = dict(self.best_config)
+                    rollback_count += 1
+                rollback_triggered = True
+                record.reflection_text = f"[自动回滚] 性能崩溃至基线{vs_baseline_pct:.1f}%，已回滚至历史最优"
+                record.text_gradient = "[回滚] 从历史最优配置出发，缩小调整步长继续探索"
+                self.history.append(record)
+                no_improvement_count += 1
+                # Task3：收敛保护（回滚场景下也触发）
+                if no_improvement_count >= max(self.max_iterations // 3, 5):
+                    if enable_exploration and not self._last_chance_explored:
+                        print(f"[收敛保护] 疑似局部最优，触发最后一次大范围探索")
+                        self._last_chance_explored = True
+                        no_improvement_count = 0
+                    else:
+                        print(f"\n[收敛] 连续 {no_improvement_count} 轮无改善，提前终止")
+                        break
+                prev_performance = self.best_performance
+                continue
+
+            # Step 4: 自省分析（传入全量历史，含每轮反思与梯度）
+            print("[Step 4] LLM 自省分析（全量历史轨迹）...")
             reflection, gradient = self.self_reflect(
                 record, self.history, env_context, causal_context
             )
             record.reflection_text = reflection
             record.text_gradient = gradient
-            print(f"  反思: {reflection[:100]}...")
-            print(f"  梯度: {gradient[:100]}...")
+            print(f"  反思: {str(reflection)[:120]}...")
+            print(f"  梯度: {str(gradient)[:120]}...")
 
             self.history.append(record)
 
-            # Step 5: 收敛检查
+            # Step 5: 收敛检查（Task3：加入 _last_chance_explored 保护）
             if record.is_improvement:
                 no_improvement_count = 0
             else:
                 no_improvement_count += 1
 
             if no_improvement_count >= max(self.max_iterations // 3, 5):
-                print(f"\n[收敛] 连续 {no_improvement_count} 轮无改善，提前终止")
-                break
+                if enable_exploration and not self._last_chance_explored:
+                    # 还未给过探索机会，不能真正终止
+                    print(f"[收敛保护] 连续{no_improvement_count}轮无改善，"
+                          f"疑似局部最优，触发最后一次大范围探索后再决定是否终止")
+                    self._last_chance_explored = True
+                    no_improvement_count = 0
+                    # 强制下一轮为探索模式（在 Step 6 会被设为 True）
+                    _force_exploration = True
+                else:
+                    print(f"\n[收敛] 连续无改善 + 探索后仍无突破，真正收敛，终止")
+                    break
+            else:
+                _force_exploration = False
 
             if iteration > self.max_iterations // 2 and abs(record.delta_performance) < self.convergence_threshold * 100:
                 print(f"\n[收敛] 性能变化 {record.delta_performance:.2f}% "
@@ -549,12 +724,29 @@ class ReflectiveEngine:
                 break
 
             # Step 6: 生成下一轮配置
+            # Task2：判断是否为主动探索轮次（仅温度调度模式下启用）
+            if enable_exploration:
+                is_exploration_round = _force_exploration or (iteration % EXPLORATION_INTERVAL == 0)
+            else:
+                is_exploration_round = False
+
             if iteration < self.max_iterations:
-                print("[Step 6] 基于文本梯度生成下一轮配置...")
+                if vs_baseline_pct < 0 and self.best_config:
+                    base_config_for_next = dict(self.best_config)
+                    print(f"[Step 6] 性能低于基线，以历史最优配置为起点生成下一轮配置...")
+                else:
+                    base_config_for_next = current_config
+                    if is_exploration_round:
+                        print(f"[Step 6] 主动探索轮次（iter%{EXPLORATION_INTERVAL}==0），扩大步长探索新区域...")
+                    else:
+                        print("[Step 6] 基于文本梯度生成下一轮配置...")
                 current_config = self.generate_next_config(
-                    gradient, current_config, target_knobs, value_ranges
+                    gradient, base_config_for_next, target_knobs, value_ranges,
+                    exploration_mode=is_exploration_round
                 )
                 prev_performance = current_performance
+
+        print(f"\n[优化完成] 共触发回滚 {rollback_count} 次")
 
         # 输出结果
         result = self._generate_report(output_dir)

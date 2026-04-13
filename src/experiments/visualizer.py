@@ -82,6 +82,11 @@ class ExperimentVisualizer:
         saved['safety_table']      = self.plot_safety_table(comparison_data, prefix)
         saved['dashboard']         = self.plot_dashboard(comparison_data, prefix)
 
+        # BO vs LLM 深度对比分析图（有 gptuner 和 ltuner 时自动生成）
+        methods = self._detect_methods(comparison_data)
+        if 'gptuner' in methods and 'ltuner' in methods:
+            saved['bo_vs_llm'] = self.plot_bo_vs_llm_analysis(comparison_data, prefix)
+
         # 多 session 误差带 (如果有多个 session)
         if comparison_data.get('sessions_count', 1) > 1:
             saved['multi_session'] = self.plot_multi_session_convergence(comparison_data, prefix)
@@ -568,6 +573,255 @@ class ExperimentVisualizer:
         fig.tight_layout()
         fp = os.path.join(self.output_dir, f'{prefix}_multi_session.png')
         fig.savefig(fp, dpi=150, bbox_inches='tight'); plt.close(fig)
+        return fp
+
+    # ----------------------------------------------------------
+    # 7. BO vs LLM 深度对比分析 (论文专用)
+    # ----------------------------------------------------------
+    def plot_bo_vs_llm_analysis(self, data: Dict, prefix: str) -> str:
+        """
+        四象限分析图，专为论文设计：
+        左上: 每轮实际TPS散点图（突出BO随机性 vs LLM稳定性）
+        右上: 搜索效率分析（累计有效配置比例）
+        左下: BO Fine阶段退化对比（前半 vs 后半均值）
+        右下: 综合对比雷达图（提升/稳定性/效率/收敛速度）
+        """
+        is_lat = self._is_latency(data)
+        baseline = self._get_baseline(data, is_lat)
+        gp_data = data.get('gptuner', {})
+        lt_data = data.get('ltuner', {})
+        gp_vals = self._get_values(gp_data, is_lat)
+        lt_vals = self._get_values(lt_data, is_lat)
+        coarse_n = 30  # GPTuner coarse stage rounds
+
+        fig = plt.figure(figsize=(18, 13))
+        fig.patch.set_facecolor(BG_COLOR)
+        fig.suptitle(
+            _get_label('BO方法 vs LLM方法 深度对比分析 (论文)',
+                       'BO vs LLM: Deep Comparison Analysis (Paper)'),
+            fontsize=16, fontweight='bold', y=0.98, fontproperties=CHINESE_FONT
+        )
+
+        # ── 左上: 每轮TPS散点（BO随机性 vs LLM稳定性）──────────────────
+        ax1 = fig.add_subplot(2, 2, 1)
+        ax1.set_facecolor(BG_COLOR)
+
+        # GPTuner 散点（区分 Coarse/Fine）
+        gp_coarse = [(i, v) for i, v in enumerate(gp_vals[:coarse_n]) if v > 0]
+        gp_fine   = [(i, v) for i, v in enumerate(gp_vals[coarse_n:], coarse_n) if v > 0]
+        gp_crash  = [i for i, v in enumerate(gp_vals) if v <= 0]
+
+        if gp_coarse:
+            ax1.scatter([x[0] for x in gp_coarse], [x[1] for x in gp_coarse],
+                        color='#64B5F6', s=25, alpha=0.7, zorder=4,
+                        label=_get_label('GPTuner-Coarse', 'GPTuner-Coarse'))
+        if gp_fine:
+            ax1.scatter([x[0] for x in gp_fine], [x[1] for x in gp_fine],
+                        color='#1565C0', s=25, alpha=0.7, zorder=4,
+                        label=_get_label('GPTuner-Fine', 'GPTuner-Fine'))
+        if gp_crash:
+            ax1.scatter(gp_crash, [baseline * 0.1] * len(gp_crash),
+                        color='red', s=50, marker='x', alpha=0.8, zorder=5,
+                        label=_get_label(f'BO崩溃({len(gp_crash)}次)', f'BO Crash({len(gp_crash)})'))
+
+        # LTuner 散点
+        lt_valid = [(i, v) for i, v in enumerate(lt_vals) if v > 0]
+        if lt_valid:
+            ax1.scatter([x[0] for x in lt_valid], [x[1] for x in lt_valid],
+                        color='#FF5722', s=40, alpha=0.85, zorder=4, marker='o',
+                        label=_get_label('LTuner (LLM)', 'LTuner (LLM)'))
+
+        if baseline > 0:
+            ax1.axhline(y=baseline, color=BASELINE_COLOR, linestyle='--',
+                        linewidth=1.5, alpha=0.7,
+                        label=f'Baseline ({baseline:.0f})')
+            ax1.axvline(x=coarse_n, color='#9C27B0', linestyle=':',
+                        linewidth=1.2, alpha=0.6,
+                        label=_get_label('Coarse/Fine分界', 'Coarse/Fine Boundary'))
+
+        ax1.set_xlabel(_get_label('迭代轮次', 'Iteration'), fontproperties=CHINESE_FONT)
+        ax1.set_ylabel(_get_label('TPS (事务/秒)', 'TPS'), fontproperties=CHINESE_FONT)
+        ax1.set_title(_get_label('每轮TPS：BO随机性 vs LLM稳定性',
+                                 'Per-Iteration TPS: BO Variance vs LLM Stability'),
+                      fontweight='bold', fontproperties=CHINESE_FONT)
+        ax1.legend(fontsize=7, prop=CHINESE_FONT, loc='upper left')
+        ax1.grid(alpha=0.3)
+
+        # ── 右上: 累计最佳收敛速度对比 ──────────────────────────────────
+        ax2 = fig.add_subplot(2, 2, 2)
+        ax2.set_facecolor(BG_COLOR)
+
+        gp_cum = self._cumulative_best(gp_vals, is_lat)
+        lt_cum = self._cumulative_best(lt_vals, is_lat)
+
+        if gp_cum:
+            # 归一化到百分比提升
+            gp_pct = [(v - baseline) / abs(baseline) * 100 for v in gp_cum]
+            ax2.plot(range(len(gp_pct)), gp_pct, color='#2196F3',
+                     linewidth=2.0, label='GPTuner (BO)', zorder=4)
+            ax2.axvline(x=coarse_n, color='#9C27B0', linestyle=':',
+                        linewidth=1.0, alpha=0.5)
+            ax2.annotate(_get_label('Fine开始', 'Fine start'),
+                         xy=(coarse_n, gp_pct[min(coarse_n, len(gp_pct)-1)]),
+                         fontsize=7, color='#9C27B0',
+                         xytext=(coarse_n+1, gp_pct[min(coarse_n, len(gp_pct)-1)] - 15),
+                         fontproperties=CHINESE_FONT)
+        if lt_cum:
+            lt_pct = [(v - baseline) / abs(baseline) * 100 for v in lt_cum]
+            ax2.plot(range(len(lt_pct)), lt_pct, color='#FF5722',
+                     linewidth=2.5, label='LTuner (LLM)', zorder=5)
+            # 标注最终提升
+            ax2.annotate(f'+{lt_pct[-1]:.1f}%',
+                         xy=(len(lt_pct)-1, lt_pct[-1]),
+                         fontsize=9, color='#FF5722', fontweight='bold',
+                         xytext=(-30, 8), textcoords='offset points')
+
+        ax2.axhline(y=0, color=BASELINE_COLOR, linestyle='--', linewidth=1.2, alpha=0.6,
+                    label='Baseline (0%)')
+        ax2.set_xlabel(_get_label('迭代轮次', 'Iteration'), fontproperties=CHINESE_FONT)
+        ax2.set_ylabel(_get_label('相对基线提升 (%)', 'Improvement vs Baseline (%)'),
+                       fontproperties=CHINESE_FONT)
+        ax2.set_title(_get_label('收敛速度对比（归一化到基线提升%）',
+                                 'Convergence Speed (% Improvement vs Baseline)'),
+                      fontweight='bold', fontproperties=CHINESE_FONT)
+        ax2.legend(fontsize=9, prop=CHINESE_FONT)
+        ax2.grid(alpha=0.3)
+
+        # ── 左下: BO Fine阶段退化 vs LLM全程稳定 ────────────────────────
+        ax3 = fig.add_subplot(2, 2, 3)
+        ax3.set_facecolor(BG_COLOR)
+
+        # BO阶段均值对比
+        gp_coarse_valid = [v for v in gp_vals[:coarse_n] if v > 0]
+        gp_fine_valid   = [v for v in gp_vals[coarse_n:] if v > 0]
+        gp_fine_h1 = gp_fine_valid[:len(gp_fine_valid)//2]
+        gp_fine_h2 = gp_fine_valid[len(gp_fine_valid)//2:]
+        lt_h1 = lt_vals[:len(lt_vals)//2] if lt_vals else []
+        lt_h2 = lt_vals[len(lt_vals)//2:] if lt_vals else []
+
+        stage_labels = [
+            _get_label('BO-Coarse\n(探索)', 'BO-Coarse\n(Explore)'),
+            _get_label('BO-Fine\n前半段', 'BO-Fine\nFirst Half'),
+            _get_label('BO-Fine\n后半段', 'BO-Fine\nSecond Half'),
+            _get_label('LLM\n前半段', 'LLM\nFirst Half'),
+            _get_label('LLM\n后半段', 'LLM\nSecond Half'),
+        ]
+        stage_avgs = [
+            sum(gp_coarse_valid)/len(gp_coarse_valid) if gp_coarse_valid else 0,
+            sum(gp_fine_h1)/len(gp_fine_h1) if gp_fine_h1 else 0,
+            sum(gp_fine_h2)/len(gp_fine_h2) if gp_fine_h2 else 0,
+            sum(lt_h1)/len(lt_h1) if lt_h1 else 0,
+            sum(lt_h2)/len(lt_h2) if lt_h2 else 0,
+        ]
+        stage_colors = ['#64B5F6', '#1565C0', '#0D47A1', '#FF8A65', '#FF5722']
+        bars = ax3.bar(stage_labels, stage_avgs, color=stage_colors,
+                       width=0.55, edgecolor='white')
+        for bar, val in zip(bars, stage_avgs):
+            if val > 0:
+                ax3.text(bar.get_x() + bar.get_width()/2,
+                         bar.get_height() + baseline * 0.01,
+                         f'{val:.0f}', ha='center', fontsize=9, fontweight='bold')
+        if baseline > 0:
+            ax3.axhline(y=baseline, color=BASELINE_COLOR, linestyle='--',
+                        linewidth=1.5, alpha=0.7,
+                        label=f'Baseline ({baseline:.0f})')
+        ax3.set_ylabel(_get_label('平均TPS', 'Avg TPS'), fontproperties=CHINESE_FONT)
+        ax3.set_title(_get_label('各阶段均值：BO Fine退化 vs LLM全程提升',
+                                 'Stage Avg: BO Fine Degradation vs LLM Stability'),
+                      fontweight='bold', fontproperties=CHINESE_FONT)
+        ax3.legend(fontsize=8, prop=CHINESE_FONT)
+        ax3.grid(axis='y', alpha=0.3)
+        ax3.tick_params(axis='x', labelsize=8)
+
+        # ── 右下: 关键指标雷达图 ─────────────────────────────────────────
+        ax4 = fig.add_subplot(2, 2, 4, polar=True)
+        ax4.set_facecolor(BG_COLOR)
+
+        radar_labels = [
+            _get_label('提升幅度', 'Improvement'),
+            _get_label('稳定性\n(无崩溃)', 'Stability'),
+            _get_label('收敛速度', 'Convergence'),
+            _get_label('样本效率', 'Sample\nEfficiency'),
+            _get_label('全程一致性', 'Consistency'),
+        ]
+        n_labels = len(radar_labels)
+        angles = np.linspace(0, 2 * np.pi, n_labels, endpoint=False).tolist()
+        angles += angles[:1]
+
+        # 归一化到 0-1
+        gp_impr = gp_data.get('improvement_percent', 0)
+        lt_impr = lt_data.get('improvement_percent', 0)
+        max_impr = max(gp_impr, lt_impr, 1)
+
+        gp_crashes_n = sum(1 for v in gp_vals if v <= 0)
+        lt_crashes_n = sum(1 for v in lt_vals if v <= 0)
+        max_crashes = max(gp_crashes_n, lt_crashes_n, 1)
+
+        # 收敛速度: 达到最终最优80%所需轮次的倒数
+        def convergence_speed(vals, target, is_lat):
+            for i, v in enumerate(self._cumulative_best(vals, is_lat)):
+                threshold = target * 0.8 if is_lat else target * 0.8
+                if not is_lat and v >= threshold:
+                    return 1 / (i + 1)
+                elif is_lat and v <= threshold:
+                    return 1 / (i + 1)
+            return 0
+
+        gp_best = gp_data.get('best_tps', 1)
+        lt_best = lt_data.get('best_tps', 1)
+        gp_conv = convergence_speed(gp_vals, gp_best, is_lat)
+        lt_conv = convergence_speed(lt_vals, lt_best, is_lat)
+        max_conv = max(gp_conv, lt_conv, 1e-9)
+
+        # 样本效率: 提升%/迭代次数
+        gp_eff = gp_impr / max(gp_data.get('total_iterations', 1), 1)
+        lt_eff = lt_impr / max(lt_data.get('total_iterations', 1), 1)
+        max_eff = max(gp_eff, lt_eff, 1e-9)
+
+        # 全程一致性: 有效轮次比例(非崩溃)
+        gp_consist = (len(gp_vals) - gp_crashes_n) / max(len(gp_vals), 1)
+        lt_consist = (len(lt_vals) - lt_crashes_n) / max(len(lt_vals), 1)
+
+        gp_scores = [
+            gp_impr / max_impr,
+            1 - gp_crashes_n / max(max_crashes * 1.5, 1),
+            gp_conv / max_conv,
+            gp_eff / max_eff,
+            gp_consist,
+        ]
+        lt_scores = [
+            lt_impr / max_impr,
+            1 - lt_crashes_n / max(max_crashes * 1.5, 1),
+            lt_conv / max_conv,
+            lt_eff / max_eff,
+            lt_consist,
+        ]
+        gp_scores = [max(0, min(1, s)) for s in gp_scores] + [gp_scores[0]]
+        lt_scores = [max(0, min(1, s)) for s in lt_scores] + [lt_scores[0]]
+
+        ax4.plot(angles, gp_scores, color='#2196F3', linewidth=2,
+                 label='GPTuner (BO)')
+        ax4.fill(angles, gp_scores, color='#2196F3', alpha=0.15)
+        ax4.plot(angles, lt_scores, color='#FF5722', linewidth=2.5,
+                 label='LTuner (LLM)')
+        ax4.fill(angles, lt_scores, color='#FF5722', alpha=0.2)
+
+        ax4.set_xticks(angles[:-1])
+        ax4.set_xticklabels(radar_labels, fontsize=8, fontproperties=CHINESE_FONT)
+        ax4.set_ylim(0, 1)
+        ax4.set_yticks([0.25, 0.5, 0.75, 1.0])
+        ax4.set_yticklabels(['0.25', '0.5', '0.75', '1.0'], fontsize=7)
+        ax4.set_title(_get_label('综合能力雷达图 (归一化)',
+                                 'Capability Radar (Normalized)'),
+                      fontweight='bold', fontproperties=CHINESE_FONT, pad=15)
+        ax4.legend(fontsize=9, prop=CHINESE_FONT,
+                   loc='upper right', bbox_to_anchor=(1.35, 1.1))
+        ax4.grid(True, alpha=0.4)
+
+        fig.tight_layout(pad=2.5, rect=[0, 0, 1, 0.95])
+        fp = os.path.join(self.output_dir, f'{prefix}_bo_vs_llm.png')
+        fig.savefig(fp, dpi=150, bbox_inches='tight')
+        plt.close(fig)
         return fp
 
 

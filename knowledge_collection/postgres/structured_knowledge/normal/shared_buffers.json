@@ -5,8 +5,8 @@
   "type": "integer",
   "unit": "8kB",
   "constraints": {
-    "min": 16,
-    "max": 1073741823,
+    "min": "128",
+    "max": "4096",
     "hard_rule": "shared_buffers_kb < total_ram_kb * 0.6"
   },
   "default_formula": "min(total_ram_kb * 0.25, 8 * 1024 * 1024)",
@@ -32,8 +32,8 @@
   "suggested_values": [
     "1.75 GB"
   ],
-  "min_value": null,
-  "max_value": "2.8 GB",
+  "min_value": 128,
+  "max_value": 4096,
   "cpu": 2,
   "ram": 7,
   "disk_size": 39,

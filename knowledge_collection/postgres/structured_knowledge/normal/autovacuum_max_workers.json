@@ -19,15 +19,15 @@
   "constraints": {
     "hard_rule": "value <= 262143 && value >= 1",
     "min": "1",
-    "max": "262143"
+    "max": "20"
   },
   "tuning_tips": "Set to (number of CPU cores - 1) for write-heavy workloads; avoid exceeding available I/O and memory capacity per worker. Monitor bloat and pg_stat_progress_vacuum to validate effectiveness.",
   "default_formula": "min(max(3, cpu_cores - 1), 262143)",
   "suggested_values": [
     1
   ],
-  "min_value": null,
-  "max_value": null,
+  "min_value": 1,
+  "max_value": 20,
   "cpu": 2,
   "ram": 7,
   "disk_size": 39,

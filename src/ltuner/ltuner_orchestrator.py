@@ -36,7 +36,8 @@ class LTunerOrchestrator:
                  convergence_threshold: float = 0.02,
                  top_k_knobs: int = 20,
                  scenario: str = "HYBRID",
-                 output_dir: str = "./optimization_results/ltuner"):
+                 output_dir: str = "./optimization_results/ltuner",
+                 use_temperature_scheduling: bool = True):
         """
         Args:
             dbms: PgDBMS 实例
@@ -50,6 +51,7 @@ class LTunerOrchestrator:
             top_k_knobs: MoE 筛选 Top-K 参数数
             scenario: 场景类型 (OLTP/OLAP/HYBRID)
             output_dir: 结果输出目录
+            use_temperature_scheduling: 是否启用动态温度调度/主动探索/收敛保护
         """
         self.dbms = dbms
         self.test = test
@@ -72,7 +74,8 @@ class LTunerOrchestrator:
             dbms=dbms, test=test, timeout=timeout,
             api_base=api_base, api_key=api_key, model=model,
             max_iterations=max_iterations,
-            convergence_threshold=convergence_threshold
+            convergence_threshold=convergence_threshold,
+            use_temperature_scheduling=use_temperature_scheduling
         )
 
         # 场景自动检测

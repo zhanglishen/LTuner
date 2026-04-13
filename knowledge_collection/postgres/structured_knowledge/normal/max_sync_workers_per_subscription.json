@@ -17,8 +17,10 @@
   "constraints": {
     "hard_rule": "value <= max_worker_processes - max_logical_replication_workers",
     "min": "0",
-    "max": "262143"
+    "max": "16"
   },
   "tuning_tips": "Increase to improve parallelism during initial sync of many tables; ensure total background workers (logical + sync + others) do not exceed max_worker_processes. Each worker handles one table, so set no higher than the typical number of new/changed tables per sync batch.",
-  "default_formula": "min(2, number_of_tables_in_subscription / 10)"
+  "default_formula": "min(2, number_of_tables_in_subscription / 10)",
+  "min_value": 0,
+  "max_value": 16
 }

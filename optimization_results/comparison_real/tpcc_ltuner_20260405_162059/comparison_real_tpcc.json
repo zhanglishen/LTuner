@@ -1,0 +1,73 @@
+{
+  "experiment_time": "2026-04-05T18:34:45.223519",
+  "test": "tpcc",
+  "mode": "real",
+  "methods": [
+    "ltuner"
+  ],
+  "baseline_tps": 563.8997673882133,
+  "baseline_latency": 56726,
+  "ltuner": {
+    "method": "LTuner (Self-Reflective)",
+    "test": "tpcc",
+    "baseline_tps": 563.8997673882133,
+    "baseline_latency": 56726,
+    "total_iterations": 18,
+    "total_time_seconds": 7836.68,
+    "config_failures": 0,
+    "iteration_tps": [
+      1261.3664664737933,
+      1289.11624461717,
+      1281.2275805754994,
+      1471.2604429545283,
+      1847.2384833584672,
+      1927.3492969243914,
+      1889.1217814481302,
+      1885.1043554771773,
+      2201.960296446967,
+      2303.070023008827,
+      2237.377776124604,
+      1791.1275016356706,
+      2162.7383981755615,
+      2269.3106660110384,
+      2368.2487379339336,
+      2528.826795159979,
+      2829.4700410152063,
+      2825.409006463942
+    ],
+    "iteration_latency": [
+      25360,
+      24807,
+      24965,
+      21739,
+      17316,
+      16596,
+      16930,
+      16968,
+      14526,
+      13888,
+      14295,
+      17859,
+      14790,
+      14095,
+      13506,
+      12644,
+      11303,
+      11320
+    ],
+    "best_tps": 2829.4700410152063,
+    "best_latency": Infinity,
+    "improvement_percent": 401.77
+  },
+  "summary": {
+    "winner": "ltuner",
+    "winner_improvement": 401.77,
+    "methods_compared": 1,
+    "ltuner_improvement": 401.77,
+    "ltuner_iterations": 18,
+    "ltuner_time": 7836.68
+  },
+  "session": 1,
+  "run_subdir": "tpcc_ltuner_20260405_162059",
+  "run_timestamp": "20260405_162059"
+}

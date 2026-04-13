@@ -5,8 +5,8 @@
   "type": "integer",
   "unit": "count",
   "constraints": {
-    "min": 1,
-    "max": 262143,
+    "min": "10",
+    "max": "500",
     "hard_rule": "max_connections * 10MB < total_ram_mb"
   },
   "default_formula": "min(cpu_count * 4, 300)",
@@ -31,8 +31,8 @@
     4,
     10
   ],
-  "min_value": null,
-  "max_value": null,
+  "min_value": 10,
+  "max_value": 500,
   "cpu": 2,
   "ram": 7,
   "disk_size": 39,

@@ -5,8 +5,8 @@
   "type": "integer",
   "unit": "kB",
   "constraints": {
-    "min": 1024,
-    "max": 2147483647,
+    "min": "64",
+    "max": "4096",
     "hard_rule": "maintenance_work_mem < total_ram_kb * 0.2"
   },
   "default_formula": "min(total_ram_kb * 0.05, 1 * 1024 * 1024)",
@@ -29,8 +29,8 @@
   "suggested_values": [
     "1 GB"
   ],
-  "min_value": null,
-  "max_value": null,
+  "min_value": 64,
+  "max_value": 4096,
   "cpu": 2,
   "ram": 7,
   "disk_size": 39,

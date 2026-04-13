@@ -17,8 +17,10 @@
   "constraints": {
     "hard_rule": "value >= max_connections",
     "min": "0",
-    "max": "262143"
+    "max": "200"
   },
   "tuning_tips": "Set to at least max_connections; if using prepared transactions heavily, increase proportionally to expected concurrent prepared txns. Must be equal to or greater than master's value on standby servers.",
-  "default_formula": "max_connections"
+  "default_formula": "max_connections",
+  "min_value": 0,
+  "max_value": 200
 }

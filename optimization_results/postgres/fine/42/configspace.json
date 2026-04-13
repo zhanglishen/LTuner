@@ -34,7 +34,7 @@
       "type": "uniform_int",
       "log": false,
       "lower": 1,
-      "upper": 262143,
+      "upper": 20,
       "default": 3,
       "q": null
     },
@@ -274,7 +274,7 @@
       "type": "uniform_int",
       "log": false,
       "lower": 1,
-      "upper": 2147483647,
+      "upper": 590447,
       "default": 524288,
       "q": null
     },
@@ -363,7 +363,7 @@
       "type": "uniform_int",
       "log": false,
       "lower": 1024,
-      "upper": 2147483647,
+      "upper": 766384,
       "default": 65536,
       "q": null
     },
@@ -371,8 +371,8 @@
       "name": "max_connections",
       "type": "uniform_int",
       "log": false,
-      "lower": 1,
-      "upper": 262143,
+      "lower": 5,
+      "upper": 500,
       "default": 100,
       "q": null
     },
@@ -390,7 +390,7 @@
       "type": "uniform_int",
       "log": false,
       "lower": 0,
-      "upper": 262143,
+      "upper": 20,
       "default": 10,
       "q": null
     },
@@ -407,8 +407,8 @@
       "name": "max_worker_processes",
       "type": "uniform_int",
       "log": false,
-      "lower": 0,
-      "upper": 262143,
+      "lower": 1,
+      "upper": 64,
       "default": 8,
       "q": null
     },
@@ -444,7 +444,7 @@
       "type": "uniform_int",
       "log": false,
       "lower": 16,
-      "upper": 350000,
+      "upper": 168158,
       "default": 16384,
       "q": null
     },
@@ -492,7 +492,7 @@
       "type": "uniform_int",
       "log": false,
       "lower": 64,
-      "upper": 1000000,
+      "upper": 751024,
       "default": 4096,
       "q": null
     },
@@ -600,7 +600,7 @@
       "type": "uniform_int",
       "log": false,
       "lower": 0,
-      "upper": 262143,
+      "upper": 20,
       "default": 10,
       "q": null
     },
@@ -692,8 +692,8 @@
       "name": "wal_buffers",
       "type": "uniform_int",
       "log": false,
-      "lower": 8,
-      "upper": 2000,
+      "lower": 0,
+      "upper": 1628,
       "default": 512,
       "q": null
     },

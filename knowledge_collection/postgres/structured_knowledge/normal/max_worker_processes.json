@@ -16,17 +16,17 @@
     "max_logical_replication_workers"
   ],
   "constraints": {
-    "hard_rule": "value <= 262143 && value >= 0",
-    "min": "0",
-    "max": "262143"
+    "hard_rule": "value <= 64 && value >= 1",
+    "min": "1",
+    "max": "64"
   },
-  "tuning_tips": "Set to at least the number of CPU cores; match or exceed the master's value on standby servers. Increase only if deploying many parallel queries, logical replication, or custom background workers.",
+  "tuning_tips": "Set to at least the number of CPU cores; match or exceed the master's value on standby servers. Increase only if deploying many parallel queries, logical replication, or custom background workers. On an 8-core machine, values beyond 64 provide no benefit and may cause PG startup failures.",
   "default_formula": "CPU_CORES",
   "suggested_values": [
-    2
+    8, 16, 32
   ],
-  "min_value": null,
-  "max_value": null,
+  "min_value": 1,
+  "max_value": 64,
   "cpu": 2,
   "ram": 7,
   "disk_size": 39,

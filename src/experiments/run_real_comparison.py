@@ -36,7 +36,7 @@ from experiments.visualizer import ExperimentVisualizer
 # ============================================================
 DEFAULT_CONFIG = {
     'test': 'tpch',
-    'timeout': 180,
+    'timeout': 600,
     'seed': 42,
     'bo_coarse_trials': 30,
     'bo_fine_trials': 40,
@@ -236,7 +236,69 @@ def collect_bo_results(total_time, cfg):
     result['total_iterations'] = max(len(result['iteration_latency']),
                                      len(result['iteration_tps']))
     log(f"GPTuner: {result['total_iterations']} iterations, time={total_time:.0f}s")
+    # 注入 BO 深度分析
+    result['bo_analysis'] = _analyze_bo_result(result, cfg)
     return result
+
+
+def _analyze_bo_result(result, cfg):
+    """分析 SMAC BO 的探索行为：崩溃分布、Fine 阶段退化、搜索效率"""
+    is_tpch = cfg['test'] in ['tpch']
+    coarse_n = cfg.get('bo_coarse_trials', 30)
+    tps_list = result.get('iteration_tps', [])
+    lat_list = result.get('iteration_latency', [])
+    values = lat_list if is_tpch else tps_list
+    if not values:
+        return {}
+
+    # 崩溃定义：TPS<=0 或超出合理范围
+    crashes = [i for i, v in enumerate(values) if v <= 0] if not is_tpch else []
+    crash_in_coarse = [i for i in crashes if i < coarse_n]
+    crash_in_fine   = [i for i in crashes if i >= coarse_n]
+
+    # Fine 阶段退化分析
+    fine_vals = [v for v in values[coarse_n:] if v > 0] if not is_tpch else []
+    fine_first_half = fine_vals[:len(fine_vals)//2] if fine_vals else []
+    fine_second_half = fine_vals[len(fine_vals)//2:] if fine_vals else []
+    fine_degradation = False
+    if fine_first_half and fine_second_half:
+        avg_first = sum(fine_first_half) / len(fine_first_half)
+        avg_second = sum(fine_second_half) / len(fine_second_half)
+        fine_degradation = avg_second < avg_first * 0.95  # 后半段均值下降>5%
+
+    # 找到最优点位置
+    if values:
+        valid_vals = [(i, v) for i, v in enumerate(values) if v > 0]
+        if valid_vals:
+            best_idx, best_val = max(valid_vals, key=lambda x: x[1]) if not is_tpch \
+                                 else min(valid_vals, key=lambda x: x[1])
+            best_stage = 'coarse' if best_idx < coarse_n else 'fine'
+        else:
+            best_idx, best_val, best_stage = 0, 0, 'unknown'
+    else:
+        best_idx, best_val, best_stage = 0, 0, 'unknown'
+
+    analysis = {
+        'total_crashes': len(crashes),
+        'crashes_in_coarse': len(crash_in_coarse),
+        'crashes_in_fine': len(crash_in_fine),
+        'crash_rounds': crashes,
+        'fine_degradation_detected': fine_degradation,
+        'fine_first_half_avg': round(sum(fine_first_half)/len(fine_first_half), 1) if fine_first_half else 0,
+        'fine_second_half_avg': round(sum(fine_second_half)/len(fine_second_half), 1) if fine_second_half else 0,
+        'best_found_at_round': best_idx + 1,
+        'best_found_in_stage': best_stage,
+        'exploration_efficiency': round(best_idx / max(len(values), 1) * 100, 1),
+        'analysis_summary': (
+            f"BO最优点发现于第{best_idx+1}轮({best_stage}阶段)，"
+            f"共{len(crashes)}次崩溃(Coarse:{len(crash_in_coarse)}/Fine:{len(crash_in_fine)})，"
+            + (f"Fine后半段均值({round(sum(fine_second_half)/len(fine_second_half),1) if fine_second_half else 0})"
+               f"低于前半段({round(sum(fine_first_half)/len(fine_first_half),1) if fine_first_half else 0})，存在退化。"
+               if fine_degradation else "Fine阶段无明显退化。")
+        )
+    }
+    log(f"[BO分析] {analysis['analysis_summary']}")
+    return analysis
 
 
 # ============================================================
@@ -320,12 +382,37 @@ def run_ltuner_real(cfg):
         api_base=cfg['api_base'], api_key=cfg['api_key'], model=cfg['model'],
         max_iterations=cfg['ltuner_max_iter'], convergence_threshold=0.005,
         top_k_knobs=15, output_dir=ltuner_output,
+        use_temperature_scheduling=True,
     )
     workflow_report = orchestrator.run()
     try: dbms._disconnect()
     except: pass
 
     _write_progress('running', cfg['ltuner_max_iter'], cfg['ltuner_max_iter'], 'LTuner')
+    return workflow_report
+
+
+def run_ltuner_no_temp(cfg):
+    """运行无温度调度版本的LTuner（固定temperature=0.3，无主动探索/收敛保护）"""
+    log(f"LTuner (No Temp): {cfg['ltuner_max_iter']} rounds self-reflective feedback (no temp scheduling)")
+    _write_progress('running', 0, cfg['ltuner_max_iter'], 'LTuner_NoTemp')
+
+    ltuner_output = os.path.join(cfg['output_dir'], "ltuner_no_temp")
+    os.makedirs(ltuner_output, exist_ok=True)
+
+    dbms = make_dbms()
+    orchestrator = LTunerOrchestrator(
+        dbms=dbms, test=cfg['test'], timeout=cfg['timeout'],
+        api_base=cfg['api_base'], api_key=cfg['api_key'], model=cfg['model'],
+        max_iterations=cfg['ltuner_max_iter'], convergence_threshold=0.005,
+        top_k_knobs=15, output_dir=ltuner_output,
+        use_temperature_scheduling=False,
+    )
+    workflow_report = orchestrator.run()
+    try: dbms._disconnect()
+    except: pass
+
+    _write_progress('running', cfg['ltuner_max_iter'], cfg['ltuner_max_iter'], 'LTuner_NoTemp')
     return workflow_report
 
 
@@ -336,13 +423,14 @@ def _extract_method_data(method_name, cfg, baseline_tps, baseline_lat, raw_resul
     """Extract unified data structure from method result"""
     is_latency = cfg['test'] in ['tpch']
 
-    if method_name == 'ltuner':
+    if method_name in ('ltuner', 'ltuner_no_temp'):
         final = raw_result.get('final_result', {})
         opt = raw_result.get('steps', {}).get('step4_optimize', {}).get('result', {})
         it_tps = [r.get('throughput', 0) for r in opt.get('history', [])]
         it_lat = [r.get('latency', 0) for r in opt.get('history', [])]
+        label = 'LTuner (Enhanced)' if method_name == 'ltuner' else 'LTuner (No Temp)'
         data = {
-            'method': 'LTuner (Self-Reflective)', 'test': cfg['test'],
+            'method': label, 'test': cfg['test'],
             'baseline_tps': baseline_tps, 'baseline_latency': baseline_lat,
             'total_iterations': final.get('total_iterations', len(it_lat)),
             'total_time_seconds': raw_result.get('total_time_seconds', 0),
@@ -451,7 +539,16 @@ def run_experiment(cfg=None):
     if cfg is None:
         cfg = dict(DEFAULT_CONFIG)
 
-    output_dir = cfg['output_dir']
+    base_output_dir = cfg['output_dir']
+
+    # 每次实验结果存入带时间戳的子文件夹，避免覆盖
+    run_ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+    test_name = cfg.get('test', 'tpcc')
+    methods_str = '_'.join(cfg.get('methods', ['gptuner', 'ltuner']))
+    run_subdir = f"{test_name}_{methods_str}_{run_ts}"
+    output_dir = os.path.join(base_output_dir, run_subdir)
+    cfg['output_dir'] = output_dir  # 本次运行使用独立子目录
+
     setup_logging(output_dir)
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs("./optimization_results/temp_results", exist_ok=True)
@@ -489,6 +586,8 @@ def run_experiment(cfg=None):
                 results_dict['smac'] = run_smac_only(cfg)
             elif method == 'ltuner':
                 results_dict['ltuner'] = run_ltuner_real(cfg)
+            elif method == 'ltuner_no_temp':
+                results_dict['ltuner_no_temp'] = run_ltuner_no_temp(cfg)
             else:
                 log(f"Unknown method: {method}")
 
@@ -502,11 +601,16 @@ def run_experiment(cfg=None):
     else:
         final_result = _aggregate_sessions(all_session_results, cfg)
 
+    # 记录本次运行元信息
+    final_result['run_subdir'] = run_subdir
+    final_result['run_timestamp'] = run_ts
+
     result_path = os.path.join(output_dir,
                                f'comparison_real_{cfg["test"]}.json')
     with open(result_path, 'w') as f:
         json.dump(final_result, f, indent=2, ensure_ascii=False, default=str)
     log(f"Results saved: {result_path}")
+    log(f"Result folder: {output_dir}")
 
     # Generate charts
     try:
@@ -575,10 +679,10 @@ def _print_summary(result):
 def main():
     parser = argparse.ArgumentParser(description='GPTuner vs LTuner Comparison Experiment')
     parser.add_argument('--test', default='tpch', choices=['tpch', 'tpcc'])
-    parser.add_argument('--timeout', type=int, default=180)
+    parser.add_argument('--timeout', type=int, default=600)
     parser.add_argument('--sessions', type=int, default=1)
     parser.add_argument('--methods', nargs='+', default=['gptuner', 'ltuner'],
-                        choices=['gptuner', 'ltuner', 'smac'])
+                        choices=['gptuner', 'ltuner', 'ltuner_no_temp', 'smac'])
     parser.add_argument('--bo-coarse', type=int, default=30)
     parser.add_argument('--bo-fine', type=int, default=40)
     parser.add_argument('--ltuner-iter', type=int, default=20)

@@ -18,8 +18,10 @@
   "constraints": {
     "hard_rule": "value <= max_worker_processes - max_parallel_workers - max_worker_processes_reserved_for_background",
     "min": "0",
-    "max": "262143"
+    "max": "16"
   },
   "tuning_tips": "Set to at least the number of active logical subscriptions; increase incrementally if observing replication lag, but monitor resource consumption closely since each worker consumes memory and CPU.",
-  "default_formula": "min(4, number_of_logical_subscriptions)"
+  "default_formula": "min(4, number_of_logical_subscriptions)",
+  "min_value": 0,
+  "max_value": 16
 }

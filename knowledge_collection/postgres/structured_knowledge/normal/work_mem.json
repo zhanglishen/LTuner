@@ -5,8 +5,8 @@
   "type": "integer",
   "unit": "kB",
   "constraints": {
-    "min": 64,
-    "max": 2147483647,
+    "min": "4",
+    "max": "2048",
     "hard_rule": "work_mem * max_connections < total_ram_kb * 2.0"
   },
   "default_formula": "(total_ram_kb - shared_buffers_kb) / (max_connections * 3)",
@@ -32,8 +32,8 @@
     "1 GB",
     "256 MB"
   ],
-  "min_value": null,
-  "max_value": "1 GB",
+  "min_value": 4,
+  "max_value": 2048,
   "cpu": 2,
   "ram": 7,
   "disk_size": 39,

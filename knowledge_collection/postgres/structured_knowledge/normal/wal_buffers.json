@@ -17,8 +17,8 @@
   ],
   "constraints": {
     "hard_rule": "value >= 4 and value <= 2048",
-    "min": "-1",
-    "max": "262143"
+    "min": "4",
+    "max": "256"
   },
   "tuning_tips": "Set to -1 (auto) to use 3% of shared_buffers, or manually tune between 4 (-1 maps to ~64kB) and 2048 (16MB); increase only if WAL write stalls or high commit latency are observed under load.",
   "default_formula": "shared_buffers * 0.03 / 8192",
@@ -26,8 +26,8 @@
     "64 KB",
     "16 MB"
   ],
-  "min_value": "64 KB",
-  "max_value": "16 MB",
+  "min_value": 4,
+  "max_value": 256,
   "cpu": 2,
   "ram": 7,
   "disk_size": 39,

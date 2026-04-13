@@ -17,8 +17,8 @@
   ],
   "constraints": {
     "hard_rule": "value <= (RAM * 0.7) / 8192",
-    "min": "1",
-    "max": "2147483647"
+    "min": "512",
+    "max": "12288"
   },
   "tuning_tips": "Set to 50–70% of total RAM on dedicated PostgreSQL servers; on shared servers, subtract estimated memory used by shared_buffers, work_mem, and other processes before allocating. Never set higher than actual combined cache capacity.",
   "default_formula": "RAM * 0.5 / 8192",
@@ -26,8 +26,8 @@
     "3.5 GB",
     "4.9 GB"
   ],
-  "min_value": null,
-  "max_value": null,
+  "min_value": 512,
+  "max_value": 12288,
   "cpu": 2,
   "ram": 7,
   "disk_size": 39,
